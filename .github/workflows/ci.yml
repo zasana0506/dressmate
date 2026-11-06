@@ -42,6 +42,30 @@ jobs:
       - name: Release self-check
         run: python tools/check_release.py
 
+      # 失败时把完整日志留成 artifact：本地复现不了时，日志就是唯一线索
+      - name: Collect diagnostics
+        if: always()
+        run: |
+          {
+            echo "### locale"
+            locale || true
+            echo "### python"
+            python -VV
+            echo "### check_sample"
+            python tools/check_sample.py 2>&1 || true
+            echo "### check_release"
+            python tools/check_release.py 2>&1 || true
+          } > diagnostics.txt 2>&1 || true
+          cat diagnostics.txt
+
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics-${{ matrix.python-version }}
+          path: diagnostics.txt
+          retention-days: 7
+
   docker:
     runs-on: ubuntu-latest
     needs: test
