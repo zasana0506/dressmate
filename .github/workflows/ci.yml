@@ -70,6 +70,13 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # 把排盘依赖的实际状态打出来：CI 的 runner 自带 Node 但没有 iztro，
+      # 这个差异是「本地过、CI 挂」的常见来源，写进 summary 免得下次再查一遍
+      - name: Report optional dependencies
+        if: always()
+        run: |
+          python tools/report_deps.py >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
