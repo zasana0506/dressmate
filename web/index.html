@@ -86,15 +86,23 @@
     font-size:12.5px;color:var(--ink2);line-height:1.65}
   .extras b{display:block;color:var(--ink);font-size:12px;margin-bottom:6px;letter-spacing:.02em}
   .extras .have{color:var(--ink2)}
-  .extras .have,.extras .lack,.extras .bad{display:flex;gap:0;align-items:baseline}
+  /* 有图之后不能再用 baseline 对齐——图片和文字要顶部对齐 */
+  .extras .have{display:flex;gap:9px;align-items:flex-start}
+  .extras .lack,.extras .bad{display:flex;gap:0;align-items:baseline}
   .extras .have i,.extras .lack i,.extras .bad i{font-style:normal;font-size:10px;
     padding:1px 5px;border-radius:4px;margin-right:6px;flex:none;
     background:var(--card);border:1px solid var(--line);line-height:1.5}
-  .extras .have i{color:var(--cool)}
+  .extras .have i{color:var(--cool);display:inline-block;flex:none}
   .extras .lack{color:var(--ink3);margin-top:3px}
   .extras .lack i{color:var(--warm)}
   .extras .bad{color:var(--danger);margin-top:3px}
   .extras .bad i{color:var(--danger)}
+  /* 配件的小图：跟层次行用同一个 .lphoto，缩一号 */
+  .extras .xphoto{width:36px;height:36px;border-radius:9px;flex:none;align-self:flex-start}
+  /* 文字占满剩余空间，把图片挤到右边。
+     少了这条 flex:1，图片会被文字容器顶出可视区（看着像没图）。 */
+  .extras .have .xtext{flex:1;min-width:0}
+  .extras .have .xtext{flex:1;min-width:0}
 
   /* 配件缺口：三套共用一份，所以放在顶部而不是每张卡里。
      「要补」和「可选」必须分开写——皮鞋没袜子是穿错，没系领带只是少一层讲究，
@@ -1008,9 +1016,28 @@ function bar(label, v){
 function extrasBlock(r){
   const have = r.extras || [], bad = r.extra_issues || [];
   if(!have.length && !bad.length) return "";
+  // 配件也要给图：用户上传了皮带、袜子、领带、包的照片，
+  // 只显示「已配 某某皮带 · 理由」的话，照片等于白传了。
+  // 用的还是层次行那套 .lphoto 样式，视觉上跟上面统一。
+  const photoOf = it => {
+    if(!it || !it.photo) return "";
+    const base = it.photo.split("/").pop();
+    return `<img class="lphoto xphoto" loading="lazy"
+      src="/photos/${encodeURIComponent(base)}"
+      onerror="this.outerHTML='<div class=&quot;lphoto ph&quot;>无图</div>'">`;
+  };
   let h = `<div class="extras"><b>配件收口</b>`;
   have.forEach(p=>{
-    h += `<div class="have"><i>已配</i>${esc(p.item && p.item.name)} · ${esc(p.reason||"")}</div>`;
+    const it = p.item || {};
+    // 理由里往往已经把名字说了一遍（「黑色条纹长袜和…」），
+    // 再前面写一遍就成了「黑色条纹长袜 · 黑色条纹长袜和…」。
+    // 所以：理由里已经出现名字就只显示理由。
+    const name = it.name || "";
+    const reason = p.reason || "";
+    const said = name && reason.includes(name);
+    h += `<div class="have"><div class="xtext">
+      <i>已配</i>${said ? esc(reason) : esc(name) + (reason ? " · " + esc(reason) : "")}
+      </div>${photoOf(it)}</div>`;
   });
   bad.forEach(i=>{
     h += `<div class="bad"><i>配错</i>${esc(i.note||"")}</div>`;
