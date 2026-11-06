@@ -7,6 +7,22 @@
 用法：
     python tools/check_release.py
 """
+
+# -*- coding: utf-8 -*-
+# 强制 UTF-8 输出：CI（GitHub Actions 的 Ubuntu runner）默认 locale 是 C，
+# Python 3.7+ 在那种环境下用 ASCII 编码 stdout，print 中文会抛
+# UnicodeEncodeError —— 本地 Windows 中文环境却是好的，很难本地复现。
+# 这里显式把 stdout/stderr 换成 UTF-8，与运行环境无关。
+import io as _io
+import sys as _sys
+
+for _stream in (_sys.stdout, _sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
 import os
 import re
 import subprocess

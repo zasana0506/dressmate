@@ -16,6 +16,15 @@ from urllib.parse import urlparse, parse_qs
 import urllib.parse
 import urllib.request
 
+# 强制 UTF-8 输出。容器里的 locale 常常是 C，那时 stdout 用 ASCII 编码，
+# 打印中文会抛 UnicodeEncodeError。显式改掉就跟运行环境无关了。
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from engine import config as C        # noqa: E402

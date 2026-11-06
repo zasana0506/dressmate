@@ -22,6 +22,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # Ubuntu runner 默认 locale 是 C，stdout 用 ASCII 编码。
+      # 脚本里有中文输出，不设这一层会抛 UnicodeEncodeError。
+      - name: Set locale
+        run: |
+          echo "LANG=C.UTF-8" >> "$GITHUB_ENV"
+          echo "LC_ALL=C.UTF-8" >> "$GITHUB_ENV"
+          echo "PYTHONIOENCODING=utf-8" >> "$GITHUB_ENV"
+
       - name: Run tests
         run: python -m unittest discover -s tests -v
 
