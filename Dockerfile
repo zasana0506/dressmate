@@ -5,10 +5,13 @@
 
 FROM python:3.12-slim
 
+# 仓库地址。构建时传：docker build --build-arg SOURCE_URL=https://github.com/你的用户名/dressmate .
+ARG SOURCE_URL="https://github.com/your-user/dressmate"
+
 LABEL org.opencontainers.image.title="dressmate" \
       org.opencontainers.image.description="规则驱动的每日穿搭助手：拍照建衣橱，按天气与场合给建议" \
       org.opencontainers.image.licenses="AGPL-3.0-only" \
-      org.opencontainers.image.source="https://github.com/YOUR_USER/dressmate"
+      org.opencontainers.image.source="${SOURCE_URL}"
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
