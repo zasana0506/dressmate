@@ -501,7 +501,47 @@
   <div class="foot">dressmate · 本地引擎</div>
 </div>
 
+<!--__DM_TOKEN_FLAG__-->
 <script>
+/* ---------- 访问令牌（服务端设了 DRESSMATE_TOKEN 才需要） ----------
+   服务端只告诉前端「要不要令牌」，不把令牌本身写进 HTML——
+   写进去的话，同局域网的人打开首页就能从源码里读到，防线就白设了。
+   所以令牌由人在这里输入，记住在 localStorage，之后自动带上。
+
+   这里包装 fetch 统一加头，不用改每个调用点。 */
+window.__DM_TOKEN_REQUIRED__ = window.__DM_TOKEN_REQUIRED__ || false;
+const _dmTokenKey = "dressmate_token";
+window.__DM_TOKEN__ = (function(){
+  try{ return localStorage.getItem(_dmTokenKey) || ""; }catch(e){ return ""; }
+})();
+const _origFetch = window.fetch;
+window.fetch = function(input, init){
+  try{
+    const tok = window.__DM_TOKEN__;
+    const url = typeof input === "string" ? input : (input && input.url) || "";
+    // 只给本站的 API 加令牌，外链（比如下载图片）不受影响
+    if(tok && url.startsWith("/api/")){
+      init = init || {};
+      const h = new Headers(init.headers || {});
+      h.set("X-Dressmate-Token", tok);
+      init.headers = h;
+    }
+  }catch(e){ /* 包装失败就用原 fetch，不影响功能 */ }
+  return _origFetch.call(window, input, init);
+};
+
+/* 要令牌而还没有时，弹框问一次 */
+function dmNeedToken(){
+  if(!window.__DM_TOKEN_REQUIRED__ || window.__DM_TOKEN__) return false;
+  const v = prompt("这个服务要求访问令牌（服务端设了 DRESSMATE_TOKEN）。\n请输入令牌：");
+  if(v === null) return true;                  // 用户取消
+  const t = String(v).trim();
+  if(!t) return true;
+  try{ localStorage.setItem(_dmTokenKey, t); }catch(e){}
+  window.__DM_TOKEN__ = t;
+  return false;
+}
+
 const SLOTS = {base:"内层", mid:"中层", outer:"外层", bottom:"下装", shoes:"鞋履", accessory:"配饰"};
 // 配饰格子里写款式而不是「可穿」：项链和帽子都标「可穿」等于没标
 const JTYPE_CN = {necklace:"项链", pendant:"吊坠", stud:"耳钉", earring:"耳环",
@@ -546,6 +586,16 @@ async function apiPost(path, payload, tries=3){
       try{ data = JSON.parse(text); }catch(_){ }
       if(!r.ok){
         const why = (data && data.error) || text.slice(0,80) || "";
+        // 401：令牌不对或没带。清掉记住的那个，重新问一次。
+        if(r.status === 401 && window.__DM_TOKEN_REQUIRED__){
+          try{ localStorage.removeItem(_dmTokenKey); }catch(e){}
+          window.__DM_TOKEN__ = "";
+          if(dmNeedToken()){
+            throw new Error("需要访问令牌才能修改");
+          }
+          i--;                                    // 拿到新令牌，重试这次
+          continue;
+        }
         throw new Error(`服务返回 ${r.status}${why ? "：" + why : ""}`);
       }
       if(!data) throw new Error("服务响应不是 JSON");
@@ -563,6 +613,8 @@ async function apiPost(path, payload, tries=3){
 }
 
 async function boot(){
+  // 服务端要令牌的话，先问一次（没有这一步，后面的写操作会全部 401）
+  if(dmNeedToken()) return;
   await ensureCities();
   // 老版本存的是拼音（beijing），换表之后不能让这些人一打开就「城市无效」
   const raw = localStorage.getItem("dressmate_city") || "北京";

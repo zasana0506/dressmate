@@ -123,6 +123,8 @@ tests/           254 个测试
 | `DRESSMATE_AI_BASE_URL` | OpenAI 兼容端点 | 无（不启用 AI） |
 | `DRESSMATE_AI_API_KEY` | 该端点的 key | 无 |
 | `DRESSMATE_AI_MODEL` | 视觉模型名 | `gpt-4o-mini` |
+| `DRESSMATE_TOKEN` | 写操作令牌 | 无（不设 = 不校验） |
+| `DRESSMATE_ALLOWED_ORIGINS` | 额外允许的 Origin，逗号分隔 | 无 |
 | `PORT` | 监听端口 | `8848` |
 
 **接一个自己的视觉模型**（Ollama / vLLM / 任何 OpenAI 兼容服务）：
@@ -151,6 +153,40 @@ environment:
   这个文件**不会**进版本库，也**不会**被静态服务读到（`web/` 目录下的私有文件一律 404）。
 - 紫微斗数「今日幸运穿搭」是可选的娱乐功能，需要 Node.js，默认关闭。
 - `docker compose` 默认只绑 `127.0.0.1`，局域网里的别人访问不到。
+
+## 安全
+
+这个服务保存的是私人数据，所以内置了两道防护，**都是默认开着、不用配**。
+
+### CSRF 防护（始终生效）
+
+浏览器发起的跨站 POST 会被拒掉——判断依据是 `Origin`（或 `Referer`）和 `Host` 对不对得上。
+这样你开着衣橱页面、同时开着别的网页时，那个网页没法偷偷改你的数据。
+
+命令行调用（`curl`、脚本）不带这两个头，照样放行，所以自托管用户还能用脚本调自己的服务。
+
+放在反向代理后面时，Host 是代理地址、Origin 是真实域名，对不上。用白名单放行：
+
+```bash
+DRESSMATE_ALLOWED_ORIGINS=https://你的域名 docker compose up -d
+```
+
+### 访问令牌（可选）
+
+设了 `DRESSMATE_TOKEN` 之后，所有写操作（增删改衣橱、改日程）都必须带上这个令牌：
+
+```bash
+DRESSMATE_TOKEN=你的密码 docker compose up -d
+```
+
+- 浏览器第一次打开会问你令牌，输入后记在这台机器的 localStorage 里，以后不用再输。
+- 命令行调用可以放在头里（`X-Dressmate-Token: 你的密码`）或请求体的 `token` 字段里。
+- **不设就没有这层校验**，本地单人用最省事——这就是「不配也能跑」的取舍。
+- 令牌**不会**出现在页面源码里。否则同一个 WiFi 的人打开首页就能从开发者工具里读到，
+  这道防线等于白设。
+
+如果你的服务要暴露给局域网以外的人，令牌只是最基础的一层——请自己套一层 HTTPS 反代，
+再加真正的用户体系。
 
 ## 跑测试
 

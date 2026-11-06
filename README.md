@@ -124,8 +124,10 @@ tests/           254 个测试
 | `DRESSMATE_WARDROBE_PATH` | 衣橱 json | `./wardrobe/wardrobe.json` |
 | `DRESSMATE_AI_BASE_URL` | OpenAI 兼容端点 | 无（不启用 AI） |
 | `DRESSMATE_AI_API_KEY` | 该端点的 key | 无 |
-| `DRESSMATE_AI_MODEL` | 视觉模型名 | `gpt-4o-mini` |
-| `PORT` | 监听端口 | `8848` |
+| `DRESSMATE_AI_MODEL` | Vision model name | `gpt-4o-mini` |
+| `DRESSMATE_TOKEN` | Token required for write operations | none (off by default) |
+| `DRESSMATE_ALLOWED_ORIGINS` | Extra allowed origins, comma-separated | none |
+| `PORT` | Listening port | `8848` |
 
 **接一个自己的视觉模型**（Ollama / vLLM / 任何 OpenAI 兼容服务）：
 
@@ -156,6 +158,44 @@ three paths where data leaves it, and all three are listed here:
   `web/` always return 404).
 - The Ziwei Dou Shu "lucky outfit" feature is optional, needs Node.js, and is off by default.
 - `docker compose` binds to `127.0.0.1` only, so other devices on your LAN cannot reach it.
+
+## Security
+
+This service stores private data, so it ships with two protections — **both on by default,
+nothing to configure**.
+
+### CSRF protection (always active)
+
+Cross-site POST requests are rejected: the check compares `Origin` (or `Referer`) against
+`Host`. So while you have the wardrobe page open, another tab can't silently modify your data.
+
+Command-line calls (`curl`, scripts) send neither header and are still allowed, so you can
+script against your own service.
+
+Behind a reverse proxy the `Host` is the proxy while `Origin` is your real domain, so they
+won't match. Allowlist it:
+
+```bash
+DRESSMATE_ALLOWED_ORIGINS=https://your.domain docker compose up -d
+```
+
+### Access token (optional)
+
+Set `DRESSMATE_TOKEN` and every write operation (adding, editing, deleting wardrobe items,
+changing the schedule) must carry that token:
+
+```bash
+DRESSMATE_TOKEN=yourpassword docker compose up -d
+```
+
+- The browser asks for the token the first time and remembers it in localStorage.
+- Command-line calls can send it in the `X-Dressmate-Token` header or a `token` field in the body.
+- **Without it there is no token check** — that is the "works with zero configuration" trade-off.
+- The token is **never** written into the page source. Otherwise anyone on the same WiFi
+  could read it from devtools and the whole protection would be pointless.
+
+If you expose this beyond your LAN, a token is the bare minimum — put a real HTTPS reverse
+proxy and a proper user system in front of it.
 
 ## 跑测试
 

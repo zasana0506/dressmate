@@ -37,5 +37,12 @@ services:
       DRESSMATE_AI_BASE_URL: ${DRESSMATE_AI_BASE_URL:-}
       DRESSMATE_AI_API_KEY: ${DRESSMATE_AI_API_KEY:-}
       DRESSMATE_AI_MODEL: ${DRESSMATE_AI_MODEL:-}
+      # 可选：设了之后所有写操作都要带令牌。同一局域网的人就能改你的衣橱时用它。
+      #   DRESSMATE_TOKEN=你的密码 docker compose up -d
+      # 浏览器第一次打开会问你要令牌，输一次就记住了。
+      DRESSMATE_TOKEN: ${DRESSMATE_TOKEN:-}
+      # 可选：放在反向代理后面时，Host 是代理而 Origin 是你的域名，对不上，
+      # 用这个白名单放行（逗号分隔）。
+      DRESSMATE_ALLOWED_ORIGINS: ${DRESSMATE_ALLOWED_ORIGINS:-}
       # 可选：让容器跟宿主时区一致（默认就是 Asia/Shanghai）
       TZ: ${TZ:-Asia/Shanghai}

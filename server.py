@@ -43,6 +43,87 @@ _lock = threading.Lock()
 _cache = {}
 
 
+def auth_token():
+    """可选的访问令牌。没设就返回空串——那表示「不要求令牌」。
+
+    设了 DRESSMATE_TOKEN 之后，所有写操作（POST）都必须带上它，
+    免得同一个 WiFi 里的别人随手改你的衣橱。
+
+    不设的时候保持原样：本地单人用，开了就能跑，什么都不用配。
+    """
+    return (os.environ.get("DRESSMATE_TOKEN") or "").strip()
+
+
+def token_required():
+    return bool(auth_token())
+
+
+def check_token(handler):
+    """校验请求带没带正确的令牌。返回 True 表示通过。
+
+    令牌从三个地方收（按顺序）：Authorization 头、X-Dressmate-Token 头、
+    请求体里的 token 字段。第三种是为了让命令行调用方便。
+    """
+    want = auth_token()
+    if not want:
+        return True                      # 没启用令牌，一切放行
+
+    got = ""
+    auth = handler.headers.get("Authorization") or ""
+    if auth.lower().startswith("bearer "):
+        got = auth[7:].strip()
+    if not got:
+        got = (handler.headers.get("X-Dressmate-Token") or "").strip()
+    if not got:
+        # 请求体里的 token 在 do_POST 解析 body 后补查，这里先不管
+        return None                      # None = 待定，看 body
+    return got == want
+
+
+def check_origin(handler):
+    """CSRF 防护：校验请求来源。
+
+    浏览器发起的跨站请求会带 Origin 头（POST 一定带）。
+    同源请求的 Origin 就是自己的地址；跨站请求的 Origin 是别的域名。
+    所以只要 Origin 和 Host 对不上，就是跨站请求，拒掉。
+
+    两个例外：
+    - 没有 Origin 也没有 Referer：命令行工具（curl / python -c）不发这俩，
+      浏览器发起的请求一定会带其中之一（除非策略严格到都不带）。
+      这种放行，否则自托管用户没法用脚本调自己的服务。
+    - 明确的白名单：DRESSMATE_ALLOWED_ORIGINS，逗号分隔。
+      放在反向代理后面时，Host 是代理的地址，Origin 是真实域名，
+      这时用白名单放行。
+
+    返回 True 表示通过。
+    """
+    origin = (handler.headers.get("Origin") or "").strip()
+    referer = (handler.headers.get("Referer") or "").strip()
+
+    if not origin and not referer:
+        return True                      # 命令行调用，放行
+
+    allowed = [o.strip() for o in
+               (os.environ.get("DRESSMATE_ALLOWED_ORIGINS") or "").split(",")
+               if o.strip()]
+    check = origin or referer
+    # Referer 带路径，Origin 不带
+    check = check.rstrip("/")
+    for a in allowed:
+        if check.rstrip("/") == a.rstrip("/"):
+            return True
+
+    # 同源判断：拿请求里的 Host 拼出期望的 Origin
+    host = (handler.headers.get("Host") or "").strip()
+    if not host:
+        return True                      # 代理剥掉了 Host，放行
+    scheme = "http"
+    if (handler.headers.get("X-Forwarded-Proto") or "").strip().lower() == "https":
+        scheme = "https"
+    expected = f"{scheme}://{host}"
+    return check.lower() == expected.lower() or check.lower().startswith(expected.lower() + "/")
+
+
 def load_wardrobe():
     """读衣橱。文件不存在时自动播种一份样例。
 
@@ -664,12 +745,41 @@ class Handler(BaseHTTPRequestHandler):
             ct = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
                   ".css": "text/css; charset=utf-8", ".json": "application/json; charset=utf-8"}.get(
                       ext, "application/octet-stream")
+            # index.html 注入一个「是否要令牌」的标志，**不注入令牌本身**。
+            # 令牌要是写进 HTML，同局域网的人打开首页就能从源码里读到，
+            # 那这道防线就白设了。所以由用户在页面上输入，记住在 localStorage。
+            if rel == "index.html":
+                try:
+                    with open(fp, encoding="utf-8") as f:
+                        html = f.read()
+                    flag = ("true" if token_required() else "false")
+                    inject = ("<script>window.__DM_TOKEN_REQUIRED__ = %s;</script>\n"
+                              % flag)
+                    # 页面里放的是 <!--__DM_TOKEN_FLAG__-->，整块换掉
+                    marker = "<!--__DM_TOKEN_FLAG__-->"
+                    if marker in html:
+                        html = html.replace(marker, inject, 1)
+                    else:
+                        # 页面结构变了也别把首页搞挂，插到第一个 <script> 前面
+                        idx = html.find("<script>")
+                        html = (html[:idx] + inject + html[idx:]) if idx >= 0 else html
+                    return self._send(200, html.encode("utf-8"), ct)
+                except Exception:
+                    pass
             with open(fp, "rb") as f:
                 return self._send(200, f.read(), ct)
         return self._send(404, "not found", "text/plain")
 
     def do_POST(self):
         p = urlparse(self.path)
+
+        # --- 安全校验：先拦下恶意请求，再解析 body ---
+        # CSRF：跨站发来的 POST 一律拒掉。同源放行，
+        # 命令行调用（不带 Origin/Referer）也放行。
+        if not check_origin(self):
+            _log(f"CSRF 拦截 {p.path}: Origin={self.headers.get('Origin')!r}")
+            return self._json({"error": "跨站请求被拒绝"}, 403)
+
         try:
             raw = _read_body(self)
         except Exception as exc:
@@ -682,6 +792,15 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:
             _log(f"JSON 解析失败 {p.path}: {exc}; 前80字节={raw[:80]!r}")
             return self._json({"error": "bad json"}, 400)
+
+        # --- 令牌校验（只在设了 DRESSMATE_TOKEN 时生效）---
+        if token_required():
+            ok = check_token(self)
+            if ok is None:
+                ok = str(body.get("token") or "").strip() == auth_token()
+            if not ok:
+                _log(f"令牌校验失败 {p.path}")
+                return self._json({"error": "缺少或错误的访问令牌"}, 401)
 
         if p.path == "/api/profile":
             from engine import luck as LUCK
