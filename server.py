@@ -35,8 +35,30 @@ _cache = {}
 
 
 def load_wardrobe():
+    """读衣橱。文件不存在时自动播种一份样例。
+
+    刚 clone 下来直接 python server.py 的人，衣橱文件是不存在的
+    （真实衣橱不该进仓库）。这时给一份样例，好过直接抛 FileNotFoundError
+    让页面整个打不开。
+    """
+    if not os.path.exists(WARDROBE_PATH):
+        seed_wardrobe()
     with open(WARDROBE_PATH, encoding="utf-8") as f:
         return json.load(f)
+
+
+def seed_wardrobe():
+    """把仓库里的样例衣橱复制到数据目录（仅在目标不存在时）。"""
+    sample = os.path.join(BASE_DIR, "samples", "wardrobe.json")
+    if not os.path.exists(sample):
+        # 连样例都没有（极少见）：给一个空衣橱，别崩
+        os.makedirs(os.path.dirname(WARDROBE_PATH), exist_ok=True)
+        with open(WARDROBE_PATH, "w", encoding="utf-8") as f:
+            json.dump({"items": []}, f, ensure_ascii=False)
+        return
+    os.makedirs(os.path.dirname(WARDROBE_PATH), exist_ok=True)
+    shutil.copy2(sample, WARDROBE_PATH)
+    _log("已播种样例衣橱")
 
 
 def save_wardrobe(data):
