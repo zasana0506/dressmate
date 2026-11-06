@@ -108,7 +108,7 @@ server.py        HTTP 服务与 API
 web/index.html   单文件前端
 samples/         公开样例衣橱（虚构）
 tools/           导入、校验、发布自检脚本
-tests/           254 个测试
+tests/           286 个测试
 ```
 
 ## 配置
@@ -194,7 +194,7 @@ DRESSMATE_TOKEN=你的密码 docker compose up -d
 python -m unittest discover -s tests -v
 ```
 
-254 个测试，0.8 秒跑完，不需要联网。
+286 个测试，0.8 秒跑完，不需要联网。
 
 ## 常见问题
 

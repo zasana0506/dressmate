@@ -45,6 +45,10 @@ jobs:
       - name: Release self-check
         run: python tools/check_release.py
 
+      # 双语 README 的一致性：改了中文忘了英文，GitHub 上会自相矛盾
+      - name: Check bilingual README
+        run: python tools/check_readme.py
+
       # 失败时把完整日志留成 artifact：本地复现不了时，日志就是唯一线索
       - name: Collect diagnostics
         if: always()
