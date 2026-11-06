@@ -5,7 +5,25 @@ GitHub 仓库设置页（Settings → General）里，这几项直接影响别�
 ## Description（最多 350 字符）
 
 ```
-拍照建衣橱，按天气和场合给穿搭建议。规则驱动，不猜、不联网、不花 token 钱。
+不靠大模型也能推荐穿搭。12 条可解释的规则代替 AI，零 token 成本、断网可用、每次结果一致。拍照建衣橱，按天气和场合给方案。
+```
+
+（67 字符。选这版是因为 GitHub 上同类的衣橱项目——wardrowbe、Libre-Closet、
+clothinv、wardrobe-hq——清一色走 AI 视觉识别路线。「不用大模型」是最大的区分点，
+放最前面，别人一眼就知道不一样。）
+
+备选：
+
+```
+衣柜满得关不上，早上出门还是不知道穿什么。拍照建衣橱，按天气和场合给建议——每条建议都能说出为什么这么搭。
+```
+
+（53 字符。痛点开头，转化率通常更高，但技术差异点被压在后面。）
+
+纯英文版（冲国际 star）：
+
+```
+Rule-based outfit advisor. 12 explainable style rules instead of an LLM — zero token cost, works offline, same result every time. Snap your wardrobe, get outfits for the weather.
 ```
 
 ## Topics（最多 20 个，加满）

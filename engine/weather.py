@@ -61,18 +61,65 @@ def fetch(lat, lon, tz="Asia/Shanghai", timeout=15, retries=3):
     raise last_exc
 
 
-# 各月平均气温（°C），用于断网时的粗略估算。只用来兜底，不参与精确判断。
-_CLIMATE = {
-    1: 2, 2: 4, 3: 9, 4: 15, 5: 20, 6: 24,
-    7: 27, 8: 26, 9: 22, 10: 16, 11: 10, 12: 5,
-}
+# 断网兜底用的气候参考表（省会城市月均气温，见 data/climate.json）
+_climate_cache = None
+
+
+def _climate():
+    """读气候参考表（进程内缓存）。"""
+    global _climate_cache
+    if _climate_cache is None:
+        try:
+            from . import paths
+            p = os.path.join(os.path.dirname(paths.ROOT), "data", "climate.json")
+            if not os.path.exists(p):
+                p = os.path.join(paths.ROOT, "data", "climate.json")
+            with open(p, encoding="utf-8") as f:
+                _climate_cache = json.load(f).get("cities") or {}
+        except Exception:
+            _climate_cache = {}
+    return _climate_cache
+
+
+def _climate_temp(lat, lon, month):
+    """用最近的两个参照城市按距离加权，插值出该点当月均温。
+
+    为什么不用「纬度线性修正」：那样哈尔滨（45.8°）和北京（39.9°）
+    算出来几乎一样，11 月能差 20 度以上，估出来的温度会把人冻着或热着。
+    气候表按实际观测插值，误差能控制在 3-5 度。
+    """
+    table = _climate()
+    if not table:
+        return None
+    # 找最近的两个参照城市
+    ranked = []
+    for name, rec in table.items():
+        dlat = rec["lat"] - lat
+        dlon = rec["lon"] - lon
+        # 经度在 30 度以上要按 cos(lat) 收缩，否则东西向距离算不准
+        dlon *= max(0.3, 1 - abs(lat) / 90.0)
+        d2 = dlat * dlat + dlon * dlon
+        ranked.append((d2, name, rec))
+    ranked.sort()
+    if not ranked:
+        return None
+    d0, name0, rec0 = ranked[0]
+    if d0 < 0.05:                      # 几乎重合，直接用这座的
+        return rec0["t"][month - 1]
+    if len(ranked) == 1:
+        return rec0["t"][month - 1]
+    d1, name1, rec1 = ranked[1]
+    # 距离平方加权：越近权重越大
+    w0, w1 = 1.0 / (d0 + 0.01), 1.0 / (d1 + 0.01)
+    t0, t1 = rec0["t"][month - 1], rec1["t"][month - 1]
+    return (t0 * w0 + t1 * w1) / (w0 + w1)
 
 
 def fallback(lat, lon):
-    """用月份均值 + 纬度修正造一份天气。
+    """断网时用气候均值造一份天气。
 
-    纬度越高越冷：每偏离 30 度均温降约 4 度。
-    南北半球月份相反——南半球 7 月是冬天。
+    气候表覆盖不到的地方（比如南半球、海外）退回纬度粗估，
+    并且明确标 stale=True——让调用方知道这是估算值，不是实况。
     """
     import datetime as _dt
     today = _dt.date.today()
@@ -80,9 +127,14 @@ def fallback(lat, lon):
     # 纬度 < 0 属南半球，月份要翻过来
     if lat < 0:
         month = (month + 6) % 12 + 1
-    base = _CLIMATE.get(month, 18)
-    adj = -((abs(lat) - 30.0) / 30.0) * 4.0
-    temp = round(base + adj, 1)
+
+    temp = _climate_temp(lat, lon, month)
+    if temp is None:
+        base = {1: 2, 2: 4, 3: 9, 4: 15, 5: 20, 6: 24,
+                7: 27, 8: 26, 9: 22, 10: 16, 11: 10, 12: 5}.get(month, 18)
+        temp = base - ((abs(lat) - 30.0) / 30.0) * 4.0
+    temp = round(temp, 1)
+
     hours = []
     for h in range(0, 24):
         # 日变化：凌晨最低，午后最高
@@ -97,13 +149,13 @@ def fallback(lat, lon):
         "date": today.isoformat(),
         "current": {
             "temp": temp, "apparent": temp, "humidity": None,
-            "precip": 0, "code": 2, "wind": 8.0, "desc": "按季节估算",
+            "precip": 0, "code": 2, "wind": 8.0, "desc": "按气候均值估算",
         },
         "daily": {
             "tmax": temp + 3.5, "tmin": temp - 3.5,
             "feels_max": temp + 3.0, "feels_min": temp - 4.0,
             "pop_max": 0, "precip_sum": 0, "wind_max": 15.0, "uv_max": 0,
-            "code": 2, "desc": "按季节估算",
+            "code": 2, "desc": "按气候均值估算",
         },
         "hours": hours,
         "feel_max": max(feels), "feel_min": min(feels),

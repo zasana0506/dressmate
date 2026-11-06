@@ -29,6 +29,8 @@ COPY tools/        /app/tools/
 COPY web/          /app/web/
 COPY samples/      /app/samples/
 COPY data/cities.json /app/data/cities.json
+# 气候参考表：断网时兜底天气要用，漏了会导致断网即崩
+COPY data/climate.json /app/data/climate.json
 COPY server.py     /app/server.py
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 

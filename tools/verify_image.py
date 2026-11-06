@@ -27,6 +27,7 @@ COPY_ENTRIES = [
     ("web/", "web/"),
     ("samples/", "samples/"),
     ("data/cities.json", "data/cities.json"),
+    ("data/climate.json", "data/climate.json"),
     ("server.py", "server.py"),
     ("docker-entrypoint.sh", "docker-entrypoint.sh"),
 ]
@@ -122,6 +123,16 @@ def main():
             print(f"  危险 {p}")
     else:
         print("  OK 没有密钥和私人数据")
+
+    print("\n=== 2b. 检查关键资产是否在镜像里 ===")
+    names = {dst for _, dst in files}
+    for need in ("data/cities.json", "data/climate.json",
+                 "samples/wardrobe.json", "docker-entrypoint.sh"):
+        if need in names:
+            print(f"  OK {need}")
+        else:
+            print(f"  危险 {need} 不在镜像里")
+            problems.append(f"{need} 缺失")
 
     print("\n=== 3. 在干净目录模拟镜像 ===")
     tmp = tempfile.mkdtemp(prefix="dressmate-image-")
