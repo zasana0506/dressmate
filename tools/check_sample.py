@@ -109,10 +109,15 @@ def main():
                                   for s in seasons):
             errors.append(f"{name}：season 取值有问题（{seasons!r}）")
 
-        # 照片可以留空（前端会显示占位块），但不能指向不存在的文件
+        # 照片可以留空（前端会显示占位块），但不能指向不存在的文件。
+        # 样例衣橱的照片在 samples/ 下，真实衣橱的在 wardrobe/ 下——
+        # 两者 photo 字段都是相对路径，基准目录不一样。
         photo = it.get("photo") or ""
         if photo:
-            fp = os.path.join(BASE_DIR, "wardrobe", photo)
+            base = os.path.join(BASE_DIR, "samples")
+            if not os.path.exists(os.path.join(base, photo)):
+                base = os.path.join(BASE_DIR, "wardrobe")
+            fp = os.path.join(base, photo)
             if not os.path.exists(fp):
                 errors.append(f"{name}：photo 指向不存在的文件 {photo}")
 
