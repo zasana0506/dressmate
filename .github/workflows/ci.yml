@@ -31,7 +31,10 @@ jobs:
           echo "PYTHONIOENCODING=utf-8" >> "$GITHUB_ENV"
 
       - name: Run tests
-        run: python -m unittest discover -s tests -v
+        run: |
+          python -m unittest discover -s tests -v 2>&1 | tee test-output.txt
+          # tee 会吃掉退出码，这里取 PIPESTATUS 的第一个
+          exit "${PIPESTATUS[0]}"
 
       # 校验逻辑放在脚本文件里，不内联写进 YAML。
       # 内联 python -c "..." 会被 YAML 的引号处理吃掉转义，
@@ -51,12 +54,21 @@ jobs:
             locale || true
             echo "### python"
             python -VV
+            echo "### 测试输出"
+            cat test-output.txt 2>/dev/null || echo "(没有测试输出文件)"
             echo "### check_sample"
             python tools/check_sample.py 2>&1 || true
             echo "### check_release"
             python tools/check_release.py 2>&1 || true
           } > diagnostics.txt 2>&1 || true
           cat diagnostics.txt
+          # 同时写进 step summary，在 run 页面直接能看，不用下载 artifact
+          {
+            echo "## 测试输出"
+            echo '```'
+            cat test-output.txt 2>/dev/null || echo "(没有)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload diagnostics
         if: failure()
