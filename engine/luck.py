@@ -20,6 +20,7 @@
 
 import json
 import os
+import shutil
 import subprocess
 import datetime
 
@@ -114,6 +115,40 @@ STRENGTH_NOTE = {
 
 
 # ---------------------------------------------------------------- 排盘
+
+def iztro_available():
+    """排盘依赖是否齐全：Node.js 在，且 iztro 装在能找到的地方。
+
+    只看 node 是不够的 —— CI 的 runner 自带 Node，但没装 iztro，
+    于是「有 node 就跑排盘」的测试会真的去调，然后因为找不到
+    iztro 而失败。判断条件必须和 Node 侧 loadIztro() 的候选路径一致。
+    """
+    if not shutil.which("node"):
+        return False
+    for d in _iztro_candidates():
+        if os.path.exists(os.path.join(d, "node_modules", "iztro")):
+            return True
+    return False
+
+
+def _iztro_candidates():
+    """iztro 可能所在的位置，与 ziwei_bridge.mjs 的 CANDIDATES 保持一致。"""
+    env = os.environ.get("ZIWEI_NODE_MODULES")
+    home = os.environ.get("USERPROFILE") or os.environ.get("HOME") or ""
+    cands = []
+    if env:
+        cands.append(env)
+    if home:
+        cands.append(os.path.join(home, ".workbuddy", "skills",
+                                  "ziwei-doushu", "scripts"))
+        cands.append(os.path.join(home, ".workbuddy", "skills", "ziwei-doushu"))
+    # npm 全局安装目录（node -g 的位置）
+    npm_root = os.environ.get("NPM_CONFIG_PREFIX")
+    if npm_root:
+        cands.append(os.path.join(npm_root, "lib", "node_modules"))
+    cands.append("/usr/local/lib/node_modules")
+    return [c for c in cands if c]
+
 
 def run_bridge(solar_date, time_index, gender, target_date, timeout=25):
     """调 Node 桥接排盘。失败时返回 ok=False 与可读原因。"""

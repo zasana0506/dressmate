@@ -105,9 +105,15 @@ class TestProfile(unittest.TestCase):
         self.assertTrue(r.get("need_profile"))
 
 
-@unittest.skipUnless(shutil.which("node"), "需要 Node.js 才能排盘")
+@unittest.skipUnless(LUCK.iztro_available(),
+                     "需要 Node.js 和 iztro 才能排盘")
 class TestBridge(unittest.TestCase):
-    """真排一次盘，确认桥接与 iztro 的接口没变。"""
+    """真排一次盘，确认桥接与 iztro 的接口没变。
+
+    跳过条件是「node 和 iztro 都在」而不是「有 node」——
+    CI 的 runner 自带 Node 但没装 iztro，只看 node 会让这个测试
+    真的去调排盘，然后因为找不到 iztro 而失败。
+    """
 
     def test_real_chart(self):
         raw = LUCK.run_bridge("1990-05-05", 6, "男", "2026-11-05")
