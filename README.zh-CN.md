@@ -164,8 +164,10 @@ python tools/import_photos.py --commit       # 确认没问题再写入
 
 [AGPL-3.0-only](LICENSE)。可以自托管、可以改、可以商用；改了要开源，网络提供服务也要开源。
 
-## 一起做
+## 贡献
 
 这个项目最缺的不是代码，是**真实的衣橱样本**。尤其是女装 —— 引擎的女装铁律已经写好了，但因为大部分测试数据是男装，它一直没机会被真正验证。
 
 如果你愿意贡献，看 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+想在自己机器上部署一份，看 [docs/PUBLISH.md](docs/PUBLISH.md)。
