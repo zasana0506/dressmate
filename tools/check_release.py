@@ -80,6 +80,96 @@ def run_git(args):
         return None
 
 
+# 常见的密钥形态。宁可误报也不能漏——误报的代价只是多看一眼。
+SECRET_PATTERNS = [
+    (r"wbpk_[A-Za-z0-9]{20,}", "WorkBuddy publishableKey"),
+    (r"sk-[A-Za-z0-9]{20,}", "OpenAI 风格 key"),
+    (r"ghp_[A-Za-z0-9]{20,}", "GitHub token"),
+    (r"github_pat_[A-Za-z0-9_]{20,}", "GitHub 细粒度 token"),
+    (r"AKIA[0-9A-Z]{16}", "AWS access key"),
+    (r"-----BEGIN [A-Z ]*PRIVATE KEY-----", "私钥"),
+    (r"xox[baprs]-[A-Za-z0-9-]{10,}", "Slack token"),
+    (r"AIza[0-9A-Za-z_-]{30,}", "Google API key"),
+]
+
+# 这些文件里出现密钥是允许的（它们本来就是模板/示例）
+SECRET_ALLOWLIST = ("web/cloud-config.js",)
+
+
+def _looks_like_secret(text):
+    for pat, name in SECRET_PATTERNS:
+        m = re.search(pat, text)
+        if m:
+            # 空值不算（模板里写 "sk-..." 只是占位）
+            val = m.group(0)
+            if len(val) > 12 and not re.search(r"sk-\.\.\.|sk-xxx|your-|example", val, re.I):
+                return name
+    return None
+
+
+def scan_secrets():
+    """扫当前工作区与 git 历史，找疑似密钥。
+
+    为什么历史也要扫：文件删掉了不等于没泄露过，blob 还留在对象库里。
+    真要彻底清除得重写历史 + gc，代价大，所以更该在推之前就拦住。
+    """
+    hits = []
+
+    # --- 当前工作区（只看 git 追踪的文件）---
+    tracked = run_git(["ls-files"])
+    if tracked:
+        for f in tracked.split("\n"):
+            f = f.strip()
+            if not f or f in SECRET_ALLOWLIST:
+                continue
+            fp = os.path.join(BASE_DIR, f)
+            if not os.path.isfile(fp) or os.path.getsize(fp) > 2 * 1024 * 1024:
+                continue
+            try:
+                txt = open(fp, encoding="utf-8", errors="ignore").read()
+            except Exception:
+                continue
+            name = _looks_like_secret(txt)
+            if name:
+                hits.append((f, name))
+
+    # --- git 历史：所有曾出现过的 blob ---
+    objs = run_git(["rev-list", "--objects", "--all"])
+    if objs:
+        for line in objs.split("\n"):
+            if not line.strip():
+                continue
+            sha = line.split(" ", 1)[0]
+            try:
+                p = subprocess.run(["git", "cat-file", "-t", sha], cwd=BASE_DIR,
+                                   capture_output=True, text=True, timeout=30)
+                if p.stdout.strip() != "blob":
+                    continue
+                size_p = subprocess.run(["git", "cat-file", "-s", sha], cwd=BASE_DIR,
+                                        capture_output=True, text=True, timeout=30)
+                if int(size_p.stdout.strip() or 0) > 2 * 1024 * 1024:
+                    continue
+                content_p = subprocess.run(["git", "cat-file", "blob", sha], cwd=BASE_DIR,
+                                           capture_output=True, timeout=30)
+                txt = content_p.stdout.decode("utf-8", "ignore")
+            except Exception:
+                continue
+            name = _looks_like_secret(txt)
+            if name:
+                path = line.split(" ", 1)[1] if " " in line else sha[:12]
+                hits.append((f"历史:{path}", name))
+
+    # 去重
+    seen = set()
+    uniq = []
+    for path, name in hits:
+        key = (path, name)
+        if key not in seen:
+            seen.add(key)
+            uniq.append((path, name))
+    return uniq
+
+
 def main():
     print("=== 1. 必需文件 ===")
     missing = []
@@ -161,6 +251,14 @@ def main():
               " ".join(f"{k}:{v}" for k, v in sorted(slots.items())))
     except Exception as exc:
         print(f"  失败 {exc}")
+
+    print("\n=== 6. 密钥扫描（当前工作区 + git 历史）===")
+    secret_hits = scan_secrets()
+    for path, pattern in secret_hits:
+        print(f"  危险 {path} 含疑似密钥（{pattern}）")
+        leaks.append(path)
+    if not secret_hits:
+        print("  OK 没有发现密钥")
 
     print("\n" + ("全部通过" if not missing and not leaks else
                   f"还有问题：缺 {len(missing)} 个文件，{len(leaks)} 处泄露风险"))

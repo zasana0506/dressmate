@@ -42,3 +42,9 @@ web/cloud-config.local.js
 
 # 一次性导入脚本：针对特定数据集，不通用
 tools/import_yfutupian.py
+
+# 本地调试用的临时目录（模拟 CI 环境的克隆副本等）
+.cifull/
+.cicheck*/
+.citest/
+*.patch
