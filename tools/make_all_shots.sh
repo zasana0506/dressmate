@@ -40,15 +40,24 @@ fi
 echo "  OK 服务已就绪 (127.0.0.1:$PORT)"
 
 echo "=== 3. 截图（2 倍分辨率）==="
+# 手机版：README 竖版主图用这个（App 本来是按手机做的）
 "$EDGE" --headless=new --disable-gpu --no-sandbox --hide-scrollbars \
     --window-size=760,1180 --force-device-scale-factor=2 \
     --screenshot="$BASE_DIR/$TMP/hires.png" --virtual-time-budget=12000 \
     "http://127.0.0.1:$PORT/" > /dev/null 2>&1
 [ -f "$TMP/hires.png" ] || { echo "  截图失败"; exit 1; }
-echo "  OK $TMP/hires.png"
+echo "  OK $TMP/hires.png (手机版)"
+
+# 桌面版：分享卡片是横版的，用宽屏的两栏布局更好看
+"$EDGE" --headless=new --disable-gpu --no-sandbox --hide-scrollbars \
+    --window-size=1440,900 --force-device-scale-factor=2 \
+    --screenshot="$BASE_DIR/$TMP/wide.png" --virtual-time-budget=12000 \
+    "http://127.0.0.1:$PORT/" > /dev/null 2>&1
+[ -f "$TMP/wide.png" ] || { echo "  宽屏截图失败"; exit 1; }
+echo "  OK $TMP/wide.png (桌面版)"
 
 echo "=== 4. 生成 README 主图 + 分享卡片 ==="
-python tools/make_shot.py "$TMP/hires.png" docs
+python tools/make_shot.py "$TMP/hires.png" docs "$TMP/wide.png"
 
 echo "=== 5. 校验 ==="
 python tools/check_readme.py

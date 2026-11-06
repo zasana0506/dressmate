@@ -29,7 +29,7 @@ ACCENT = (31, 158, 117)      # 绿
 MUTED = (110, 108, 104)
 
 
-def render(shot_path, out_dir):
+def render(shot_path, out_dir, wide_path=None):
     from PIL import Image, ImageDraw, ImageFont
 
     os.makedirs(out_dir, exist_ok=True)
@@ -62,6 +62,11 @@ def render(shot_path, out_dir):
     print(f"README 主图: {main_path}  {main.size[0]}x{main.size[1]}")
 
     # ---------- 2. 分享卡片：1280x640，左标题右截图 ----------
+    # 卡片是横版的，用宽屏截图（两栏布局）比手机竖版好看
+    if wide_path and os.path.exists(wide_path):
+        card_src = Image.open(wide_path).convert("RGB")
+    else:
+        card_src = shot
     W, H = 1280, 640
     card = Image.new("RGB", (W, H), PAPER)
     dr = ImageDraw.Draw(card)
@@ -93,12 +98,23 @@ def render(shot_path, out_dir):
     dr.text((x, 520), "github.com/zasana0506/dressmate",
             font=font(20), fill=ACCENT)
 
-    # 右侧：网页截图，放大后裁出推荐卡部分
-    src = shot.crop((0, 0, shot.width, min(shot.height, 1180)))
-    if src.width > 700:
-        left = (src.width - 700) // 2
-        src = src.crop((left, 0, left + 700, min(src.height, 1180)))
-    scale = (H - 80) / src.height
+    # 右侧：网页截图。宽屏图裁右栏（推荐卡），竖版图裁中间
+    src = card_src
+    if src.width > 1000:
+        # 宽屏：容器居中（1440 视口下 wrap 占 1080，左边留 180），
+        # 右栏从 180+340+18=538 开始，占视口 37% 处。
+        # 切 52% 会把推荐卡的左半边切掉，文字全被截断。
+        left = int(src.width * 0.355)
+        src = src.crop((left, 0, src.width, min(src.height, 1180)))
+    else:
+        src = src.crop((0, 0, src.width, min(src.height, 1180)))
+        if src.width > 700:
+            left = (src.width - 700) // 2
+            src = src.crop((left, 0, left + 700, min(src.height, 1180)))
+    # 缩放到卡片高度，同时限制最大宽度——
+    # 宽屏图裁出来很宽，直接按高度缩会把左边文案全盖住
+    MAX_IMG_W = 470
+    scale = min((H - 80) / src.height, MAX_IMG_W / src.width)
     src = src.resize((max(1, int(src.width * scale)), H - 80), Image.LANCZOS)
     card.paste(src, (W - src.width - 0, 40))
     # 左侧与截图交界处加一条淡分隔
@@ -113,14 +129,15 @@ def render(shot_path, out_dir):
 
 def main():
     if len(sys.argv) < 3:
-        print("用法：python tools/make_shot.py <截图文件> <输出目录>")
+        print("用法：python tools/make_shot.py <截图文件> <输出目录> [宽屏截图]")
         return 2
     shot_path = sys.argv[1]
     out_dir = sys.argv[2]
+    wide = sys.argv[3] if len(sys.argv) > 3 else None
     if not os.path.exists(shot_path):
         print(f"找不到截图：{shot_path}")
         return 1
-    render(shot_path, out_dir)
+    render(shot_path, out_dir, wide)
     return 0
 
 

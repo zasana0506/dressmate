@@ -50,4 +50,7 @@ tools/import_yfutupian.py
 .cifull/
 .cicheck*/
 .citest/
+.shotgen/
+.resp/
+.ci*
 *.patch

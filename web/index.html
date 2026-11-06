@@ -290,6 +290,49 @@
   .lrow{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--line);
     border-radius:12px;padding:9px 12px;margin-top:12px}
   .lrow .ltext{flex:1;font-size:12px;color:var(--ink2);line-height:1.5}
+
+  /* ---------- 宽屏适配 ----------
+     这个界面本来是按手机做的（站在衣柜前用），所以容器锁在 560px。
+     但很多人在电脑上用——1600px 的屏幕中间杵着一条窄柱，
+     两边全是空白，看着像网页加载失败。
+
+     所以宽屏时：容器放宽、推荐卡并排、字号微调。
+     手机上的观感一点没变。 */
+  /* 窄屏（手机）：两栏退回到上下堆叠，看起来还是原来的一列 */
+  @media (max-width: 899px){
+    #content{display:block}
+    .lcol > .card{margin-bottom:12px}
+    .rcol > .card{margin-bottom:14px}
+  }
+  @media (min-width: 900px){
+    .wrap{max-width:1080px}
+    /* 天气条和配件缺口靠左，推荐卡并排到右边 */
+    /* 用 flex 而不是 grid：grid 的行高是跨栏共享的，
+       右栏的推荐卡很高会把左栏的内容顶到屏幕外。
+       flex 两栏各管各的，左栏多高都不会影响右栏。 */
+    #content{display:flex;gap:18px;align-items:flex-start}
+    .lcol{flex:0 0 340px;min-width:0}
+    .rcol{flex:1;min-width:0}
+    .lcol > .card{margin-bottom:12px}
+    .rcol > .card{margin-bottom:14px}
+    /* gapbox 外面包了一层 .card，内部样式要跟着调 */
+    .gapcard .gapbox{border:0;background:transparent;padding:0;margin:0}
+    /* 层次行在宽屏里可以两列——每行是「照片 + 名称 + 理由」，单列太长了 */
+    .card.rk .layer{display:grid;grid-template-columns:44px 1fr auto;
+      grid-template-areas:"slot main photo" "slot reason photo";
+      column-gap:12px;row-gap:2px;align-items:start}
+    .card.rk .lslot{grid-area:slot}
+    .card.rk .lmain{grid-area:main}
+    .card.rk .lreason{grid-area:reason}
+    .card.rk .lphoto{grid-area:photo}
+    .lreason{font-size:13px}
+    /* 评分条更宽一点好看 */
+    .bars{gap:10px}
+  }
+  /* 超宽屏别让内容拉得太散 */
+  @media (min-width: 1400px){
+    .wrap{max-width:1180px}
+  }
 </style>
 </head>
 <body>
@@ -727,7 +770,9 @@ function renderToday(){
   document.getElementById("title").textContent = `今日穿搭 · ${band.label}`;
 
   const hot = w.daily.tmax >= 28, cold = w.feel_min < 8;
-  let html = "";
+  // 分两栏：左栏是天气/缺口这类「上下文」，右栏是推荐方案本身。
+  // 手机上两栏顺序堆叠（看起来还是一列），宽屏上并排。
+  let htmlL = "", html = "";
   // 开启了幸运色时，在推荐顶部带一条轻提示，不抢保暖和场合的信息
   if(d.luck && d.luck.ok){
     const hp = d.luck.health || {}, so = d.luck.social || {}, tv = d.luck.travel || {},
@@ -738,7 +783,7 @@ function renderToday(){
     if(tv.flag) tags += `<span class="ltag travel">出行注意</span>`;
     if(st.flag) tags += `<span class="ltag study">文昌 ${esc((st.stars||[]).join("、"))}</span>`;
     if(st.careful) tags += `<span class="ltag">文书多核一遍</span>`;
-    html += `<div class="card" style="padding:12px 15px">
+    htmlL += `<div class="card" style="padding:12px 15px">
       <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:13px">
         <span style="font-size:11px;color:var(--ink3)">今日幸运</span>
         <b>${esc(d.luck.star)}</b>
@@ -749,7 +794,7 @@ function renderToday(){
       ${d.warmth_relaxed?`<div class="ltags"><span class="ltag">按加严标准配不出整套，已退回常规保暖</span></div>`:""}
     </div>`;
   }
-  html += `<div class="card">
+  htmlL += `<div class="card wxcard">
     <div class="wx">
       <div><span class="wxt">${Math.round(w.current.apparent ?? w.daily.tmax)}</span><span class="wxu">℃ 体感</span></div>
       <div class="wxm">
@@ -779,11 +824,11 @@ function renderToday(){
     const opt = egaps.filter(n=>n.level!=="required");
     const row = (n, cls) => `<div class="${cls}"><i>${cls==="greq"?"要补":"可选"}</i>
         <b>${esc(n.name)}</b> · ${esc(n.color_hint||"")}</div>`;
-    html += `<div class="gapbox"><b>配件缺口 · 衣橱里还没有这几件</b>
+    htmlL += `<div class="card gapcard"><div class="gapbox"><b>配件缺口 · 衣橱里还没有这几件</b>
       ${req.map(n=>row(n,"greq")).join("")}
       ${opt.map(n=>row(n,"gopt")).join("")}
       <div class="gfoot">录进衣橱后，系统会直接从你已有的里挑出当天该配的那件。</div>
-    </div>`;
+    </div></div>`;
   }
 
   if(!(d.recommendations||[]).length){
@@ -797,7 +842,7 @@ function renderToday(){
           <div class="lmeta">${esc(x.note)}</div>
         </div>
       </div>`).join("");
-    html += `<div class="card">
+    htmlL += `<div class="card gapcard2">
       <div class="ch"><h2><span class="dot"></span>${gaps.length?`今天还差 ${gaps.length} 层`:"先把衣服传上来"}</h2>
         <span class="score">${gaps.length?"补齐就出整套":""}</span></div>
       ${gaps.length?`<div style="font-size:12px;color:var(--ink3);line-height:1.7;margin-bottom:4px">
@@ -811,7 +856,7 @@ function renderToday(){
   (d.recommendations||[]).forEach(r=>{
     const p = r.parts;
     const verdict = r.verdict ? `<span class="chip" style="${r.verdict==="行"?"":"border-color:#EF9F27;color:#633806"}">${esc(r.verdict)}</span>` : "";
-    html += `<div class="card">
+    html += `<div class="card rk">
       <div class="ch"><h2><span class="rank">${r.rank}</span>${esc(r.label)}</h2>
       ${verdict}<span class="score">综合 <b>${r.score.toFixed(3)}</b></span></div>
       <div class="bars">
@@ -857,7 +902,8 @@ function renderToday(){
   if(ctx.advice && ctx.advice.length){
     html += `<div class="note info">${ctx.advice.map(esc).join("；")}</div>`;
   }
-  document.getElementById("content").innerHTML = html;
+  document.getElementById("content").innerHTML =
+    `<div class="lcol">${htmlL}</div><div class="rcol">${html}</div>`;
 
   // 绑定必须在 innerHTML 之后，否则选不到节点
   document.querySelectorAll("#content [data-wear]").forEach(btn=>{
