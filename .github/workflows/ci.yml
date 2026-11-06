@@ -25,22 +25,11 @@ jobs:
       - name: Run tests
         run: python -m unittest discover -s tests -v
 
-      - name: Check sample data is valid
-        run: |
-          python -c "
-          import json
-          d = json.load(open('samples/wardrobe.json', encoding='utf-8'))
-          items = d['items']
-          assert len(items) >= 20, '样例衣橱太少'
-          slots = {i['slot'] for i in items}
-          need = {'base', 'mid', 'outer', 'bottom', 'shoes'}
-          missing = need - slots
-          assert not missing, f'样例缺少层位: {missing}'
-          for i in items:
-              assert 0 <= i['clo'] <= 2, f\"clo 越界: {i['name']}\"
-              assert 0 <= i['formality'] <= 4, f\"formality 越界: {i['name']}\"
-          print(f'样例衣橱 OK：{len(items)} 件')
-          "
+      # 校验逻辑放在脚本文件里，不内联写进 YAML。
+      # 内联 python -c "..." 会被 YAML 的引号处理吃掉转义，
+      # 表现为「本地能过、CI 必挂」。
+      - name: Check sample data
+        run: python tools/check_sample.py
 
       - name: Release self-check
         run: python tools/check_release.py
@@ -66,6 +55,7 @@ jobs:
 
       - name: Smoke test
         run: |
+          set -euo pipefail
           docker run -d --name dm -p 8848:8848 dressmate:ci
           # 等健康检查通过
           for i in $(seq 1 30); do
@@ -75,17 +65,15 @@ jobs:
             fi
             sleep 2
           done
-          curl -sf http://127.0.0.1:8848/api/health | tee /dev/stderr | grep -q '"ok": true'
+          curl -sf http://127.0.0.1:8848/api/health -o /tmp/health.json
+          cat /tmp/health.json
+          grep -q '"ok": true' /tmp/health.json
           # 推荐接口必须真能算出结果，而不只是返回 200
           curl -sf "http://127.0.0.1:8848/api/recommend?city=Beijing" \
-            | python -c "
-          import json, sys
-          d = json.load(sys.stdin)
-          recs = d.get('recommendations') or []
-          assert len(recs) >= 1, '没有产出推荐'
-          assert recs[0].get('outfit'), '推荐里没有单品'
-          print(f'推荐接口 OK：{len(recs)} 套')
-          "
-          # 样例衣橱必须已经播种进去
+            -o /tmp/rec.json
+          python tools/check_rec.py /tmp/rec.json
+          # 关键资产必须都在（漏一个都会让断网兜底之类的功能失效）
           docker exec dm test -f /data/wardrobe.json
+          docker exec dm test -f /data/cities.json
+          docker exec dm test -f /app/data/climate.json
           docker rm -f dm

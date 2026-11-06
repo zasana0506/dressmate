@@ -23,9 +23,11 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# 代码：引擎、服务、前端、工具、样例数据
+# 代码：引擎、服务、前端、样例数据
 COPY engine/       /app/engine/
-COPY tools/        /app/tools/
+# 只拷运行时真正要的那一个：server.py 靠它做文件名属性推断
+COPY tools/__init__.py /app/tools/__init__.py
+COPY tools/import_photos.py /app/tools/import_photos.py
 COPY web/          /app/web/
 COPY samples/      /app/samples/
 COPY data/cities.json /app/data/cities.json

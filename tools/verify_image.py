@@ -23,7 +23,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Dockerfile 里 COPY 的内容
 COPY_ENTRIES = [
     ("engine/", "engine/"),
-    ("tools/", "tools/"),
+    ("tools/__init__.py", "tools/__init__.py"),
+    ("tools/import_photos.py", "tools/import_photos.py"),
     ("web/", "web/"),
     ("samples/", "samples/"),
     ("data/cities.json", "data/cities.json"),
@@ -46,6 +47,7 @@ IGNORE_TOOLS = {
     "feedback.py", "label_photos.py", "import_yfutupian.py", "migrate_meta.py",
     "fix_colors.py", "fix_jewelry.py", "build_cities.py", "check_wardrobe.py",
     "daily_push.py", "make_sample.py", "verify_image.py", "check_release.py",
+    "check_sample.py", "check_rec.py",
 }
 
 
