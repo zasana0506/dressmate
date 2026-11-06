@@ -13,6 +13,14 @@ tells you *why*.
 
 ---
 
+<div align="center">
+
+![dressmate in action](docs/screenshot.png)
+
+</div>
+
+---
+
 ## How this differs from other outfit apps
 
 Most outfit tools work like this: take a photo → hand it to an LLM → get a paragraph back.

@@ -116,6 +116,33 @@ def main():
         if not ok:
             problems.append(f"{name} 结构问题")
 
+    print("\n=== 6. 展示图 ===")
+    for name, text in (("中文版", zh), ("英文版", en)):
+        has = "docs/screenshot.png" in text
+        print(f"  {'OK ' if has else '缺失'} {name} 引用了 screenshot.png")
+        if not has:
+            problems.append(f"{name} 没有引用展示图")
+    for f in ("docs/screenshot.png", "docs/social-preview.png"):
+        p = os.path.join(BASE_DIR, f.replace("/", os.sep))
+        ok = os.path.exists(p)
+        size = os.path.getsize(p) if ok else 0
+        print(f"  {'OK ' if ok else '缺失'} {f}" + (f"  ({size:,} 字节)" if ok else ""))
+        if not ok:
+            problems.append(f"{f} 不存在")
+    # 分享卡片必须是 GitHub 要求的尺寸
+    p = os.path.join(BASE_DIR, "docs", "social-preview.png")
+    if os.path.exists(p):
+        try:
+            from PIL import Image
+            w, h = Image.open(p).size
+            ok = (w, h) == (1280, 640)
+            print(f"  {'OK ' if ok else '问题'} 分享卡片尺寸 {w}x{h}"
+                  + ("" if ok else "（GitHub 要求 1280x640）"))
+            if not ok:
+                problems.append(f"分享卡片尺寸不对：{w}x{h}")
+        except Exception as exc:
+            print(f"  跳过 分享卡片尺寸检查（{exc}）")
+
     print("\n" + ("全部通过" if not problems else
                   "还有问题：\n  - " + "\n  - ".join(problems)))
     return 1 if problems else 0

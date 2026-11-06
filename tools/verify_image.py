@@ -200,7 +200,11 @@ def main():
             print(f"  失败 {name} 没播种")
             ok = False
     if os.path.exists(os.path.join(data, "photos")):
-        print("  OK photos 目录已建")
+        n = len(os.listdir(os.path.join(data, "photos")))
+        print(f"  OK photos 目录已建（{n} 张）")
+        if n == 0:
+            print("  失败 样例占位图没播种，页面上会全是「无图」")
+            ok = False
 
     print("\n=== 6. 从模拟镜像起服务并实调推荐 ===")
     proc = subprocess.Popen(

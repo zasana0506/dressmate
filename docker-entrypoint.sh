@@ -22,6 +22,10 @@ fi
 # 样例衣橱：只在用户还没有任何衣橱时放进去，让他一打开就有东西看
 if [ ! -f "$WARDROBE_PATH" ] && [ -f "$APP_DIR/samples/wardrobe.json" ]; then
     cp "$APP_DIR/samples/wardrobe.json" "$WARDROBE_PATH"
+    # 样例的占位图也要拷过去，否则页面上全是「无图」方块
+    if [ -d "$APP_DIR/samples/photos" ]; then
+        cp -r "$APP_DIR/samples/photos/." "$PHOTO_DIR/" 2>/dev/null || true
+    fi
     echo "[dressmate] 已播种样例衣橱（31 件），可在网页里删掉换成自己的"
 fi
 

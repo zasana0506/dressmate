@@ -4,7 +4,7 @@
     {
       "id": "s001",
       "name": "白色棉质短袖T恤",
-      "photo": "",
+      "photo": "photos/s001.jpg",
       "slot": "base",
       "category": "tshirt",
       "color": "白",
@@ -29,7 +29,7 @@
     {
       "id": "s002",
       "name": "藏青长袖衬衫",
-      "photo": "",
+      "photo": "photos/s002.jpg",
       "slot": "base",
       "category": "shirt",
       "color": "藏青",
@@ -54,7 +54,7 @@
     {
       "id": "s003",
       "name": "黑色保暖打底衫",
-      "photo": "",
+      "photo": "photos/s003.jpg",
       "slot": "base",
       "category": "thermal",
       "color": "黑",
@@ -78,7 +78,7 @@
     {
       "id": "s004",
       "name": "灰色速干运动T恤",
-      "photo": "",
+      "photo": "photos/s004.jpg",
       "slot": "base",
       "category": "sport_tshirt",
       "color": "灰",
@@ -103,7 +103,7 @@
     {
       "id": "s005",
       "name": "米白真丝衬衫",
-      "photo": "",
+      "photo": "photos/s005.jpg",
       "slot": "base",
       "category": "shirt",
       "color": "米白",
@@ -127,7 +127,7 @@
     {
       "id": "s010",
       "name": "灰色连帽卫衣",
-      "photo": "",
+      "photo": "photos/s010.jpg",
       "slot": "mid",
       "category": "hoodie",
       "color": "灰",
@@ -152,7 +152,7 @@
     {
       "id": "s011",
       "name": "驼色羊绒开衫",
-      "photo": "",
+      "photo": "photos/s011.jpg",
       "slot": "mid",
       "category": "cardigan",
       "color": "驼",
@@ -176,7 +176,7 @@
     {
       "id": "s012",
       "name": "黑色羊毛毛衣",
-      "photo": "",
+      "photo": "photos/s012.jpg",
       "slot": "mid",
       "category": "sweater",
       "color": "黑",
@@ -200,7 +200,7 @@
     {
       "id": "s013",
       "name": "藏青羊绒圆领针织衫",
-      "photo": "",
+      "photo": "photos/s013.jpg",
       "slot": "mid",
       "category": "sweater",
       "color": "藏青",
@@ -224,7 +224,7 @@
     {
       "id": "s014",
       "name": "灰色薄羊毛马甲",
-      "photo": "",
+      "photo": "photos/s014.jpg",
       "slot": "mid",
       "category": "vest",
       "color": "灰",
@@ -248,7 +248,7 @@
     {
       "id": "s015",
       "name": "黑色半拉链抓绒上衣",
-      "photo": "",
+      "photo": "photos/s015.jpg",
       "slot": "mid",
       "category": "fleece",
       "color": "黑",
@@ -272,7 +272,7 @@
     {
       "id": "s020",
       "name": "深灰长款羽绒服",
-      "photo": "",
+      "photo": "photos/s020.jpg",
       "slot": "outer",
       "category": "down_jacket",
       "color": "灰",
@@ -295,7 +295,7 @@
     {
       "id": "s021",
       "name": "米白短款羽绒服",
-      "photo": "",
+      "photo": "photos/s021.jpg",
       "slot": "outer",
       "category": "down_jacket",
       "color": "米白",
@@ -318,7 +318,7 @@
     {
       "id": "s022",
       "name": "藏青单排扣西装外套",
-      "photo": "",
+      "photo": "photos/s022.jpg",
       "slot": "outer",
       "category": "blazer",
       "color": "藏青",
@@ -342,7 +342,7 @@
     {
       "id": "s023",
       "name": "驼色风衣",
-      "photo": "",
+      "photo": "photos/s023.jpg",
       "slot": "outer",
       "category": "trench",
       "color": "驼",
@@ -366,7 +366,7 @@
     {
       "id": "s024",
       "name": "黑色羊毛大衣",
-      "photo": "",
+      "photo": "photos/s024.jpg",
       "slot": "outer",
       "category": "coat",
       "color": "黑",
@@ -390,7 +390,7 @@
     {
       "id": "s025",
       "name": "深蓝防风冲锋衣",
-      "photo": "",
+      "photo": "photos/s025.jpg",
       "slot": "outer",
       "category": "jacket",
       "color": "深蓝",
@@ -415,7 +415,7 @@
     {
       "id": "s026",
       "name": "黑色皮夹克",
-      "photo": "",
+      "photo": "photos/s026.jpg",
       "slot": "outer",
       "category": "leather_jacket",
       "color": "黑",
@@ -439,7 +439,7 @@
     {
       "id": "s030",
       "name": "深蓝直筒牛仔裤",
-      "photo": "",
+      "photo": "photos/s030.jpg",
       "slot": "bottom",
       "category": "jeans",
       "color": "深蓝",
@@ -464,7 +464,7 @@
     {
       "id": "s031",
       "name": "炭灰西裤",
-      "photo": "",
+      "photo": "photos/s031.jpg",
       "slot": "bottom",
       "category": "dress_pants",
       "color": "炭灰",
@@ -489,7 +489,7 @@
     {
       "id": "s032",
       "name": "卡其直筒长裤",
-      "photo": "",
+      "photo": "photos/s032.jpg",
       "slot": "bottom",
       "category": "chinos",
       "color": "卡其",
@@ -513,7 +513,7 @@
     {
       "id": "s033",
       "name": "黑色修身西裤",
-      "photo": "",
+      "photo": "photos/s033.jpg",
       "slot": "bottom",
       "category": "dress_pants",
       "color": "黑",
@@ -538,7 +538,7 @@
     {
       "id": "s034",
       "name": "灰色运动长裤",
-      "photo": "",
+      "photo": "photos/s034.jpg",
       "slot": "bottom",
       "category": "sport_pants",
       "color": "灰",
@@ -563,7 +563,7 @@
     {
       "id": "s035",
       "name": "米白亚麻短裤",
-      "photo": "",
+      "photo": "photos/s035.jpg",
       "slot": "bottom",
       "category": "shorts",
       "color": "米白",
@@ -586,7 +586,7 @@
     {
       "id": "s040",
       "name": "白色简洁运动鞋",
-      "photo": "",
+      "photo": "photos/s040.jpg",
       "slot": "shoes",
       "category": "sneakers",
       "color": "白",
@@ -612,7 +612,7 @@
     {
       "id": "s041",
       "name": "深棕皮质系带鞋",
-      "photo": "",
+      "photo": "photos/s041.jpg",
       "slot": "shoes",
       "category": "dress_shoes",
       "color": "棕",
@@ -637,7 +637,7 @@
     {
       "id": "s042",
       "name": "黑色切尔西靴",
-      "photo": "",
+      "photo": "photos/s042.jpg",
       "slot": "shoes",
       "category": "boots",
       "color": "黑",
@@ -661,7 +661,7 @@
     {
       "id": "s043",
       "name": "灰色跑步鞋",
-      "photo": "",
+      "photo": "photos/s043.jpg",
       "slot": "shoes",
       "category": "running_shoes",
       "color": "灰",
@@ -686,7 +686,7 @@
     {
       "id": "s050",
       "name": "黑色棒球帽",
-      "photo": "",
+      "photo": "photos/s050.jpg",
       "slot": "accessory",
       "category": "hat",
       "color": "黑",
@@ -711,7 +711,7 @@
     {
       "id": "s051",
       "name": "深灰羊毛围巾",
-      "photo": "",
+      "photo": "photos/s051.jpg",
       "slot": "accessory",
       "category": "scarf",
       "color": "深灰",
@@ -735,7 +735,7 @@
     {
       "id": "s052",
       "name": "棕色皮质手套",
-      "photo": "",
+      "photo": "photos/s052.jpg",
       "slot": "accessory",
       "category": "gloves",
       "color": "棕",

@@ -12,6 +12,14 @@
 
 ---
 
+<div align="center">
+
+![dressmate 界面](docs/screenshot.png)
+
+</div>
+
+---
+
 ## 它和别的穿搭 App 有什么不一样
 
 大部分穿搭工具的流程是「拍照 → 交给大模型 → 出一段话」。dressmate 反过来：
