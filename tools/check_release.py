@@ -8,6 +8,7 @@
     python tools/check_release.py
 """
 import os
+import re
 import subprocess
 import sys
 
@@ -75,42 +76,53 @@ def main():
             missing.append(rel)
 
     print("\n=== 2. 私人数据是否被挡住 ===")
-    leaks = []
+    print("  （本地存在这些文件是正常的，关键是 git 有没有追踪它们——见第 3 步）")
     for rel in FORBIDDEN_PREFIX:
         full = os.path.join(BASE_DIR, rel)
         if os.path.exists(full):
             n = sum(len(fs) for _, _, fs in os.walk(full)) if os.path.isdir(full) else 1
-            print(f"  警告 {rel} 存在（{n} 个文件），确认它被 .gitignore 挡住")
-    for dirpath, dirnames, filenames in os.walk(BASE_DIR):
-        dirnames[:] = [d for d in dirnames
-                       if d not in (".git", "__pycache__", "node_modules", ".venv")]
-        for fn in filenames:
-            if fn in FORBIDDEN_NAMES:
-                rel = os.path.relpath(os.path.join(dirpath, fn), BASE_DIR).replace("\\", "/")
-                if rel.startswith("samples/"):
-                    continue
-                print(f"  警告 发现 {rel}")
-                leaks.append(rel)
+            print(f"  本地存在 {rel}（{n} 个文件）")
 
     print("\n=== 3. git 追踪状态 ===")
     tracked = run_git(["ls-files"])
+    leaks = []
     if tracked is None:
         print("  还没初始化 git，跳过。")
     else:
         files = [f for f in tracked.split("\n") if f.strip()]
         print(f"  已追踪 {len(files)} 个文件")
-        bad = [f for f in files
-               if any(f.startswith(p) for p in FORBIDDEN_PREFIX)
-               or os.path.basename(f) in FORBIDDEN_NAMES]
-        for f in bad:
-            print(f"  危险 {f} 被追踪了")
-        if not bad:
-            print("  没有私人文件被追踪")
+        for f in files:
+            base = os.path.basename(f)
+            # 允许进仓库的例外：
+            #   samples/           虚构样例衣橱
+            #   tests/fixtures/    测试夹具（合成数据）
+            #   web/cloud-config.js 是空模板，带真实密钥的 local 版才危险
+            allowed = f.startswith("samples/") or f.startswith("tests/fixtures/")
+            if base == "cloud-config.js":
+                txt = ""
+                try:
+                    txt = open(os.path.join(BASE_DIR, f), encoding="utf-8").read()
+                except Exception:
+                    pass
+                if re.search(r'publishableKey\s*:\s*"[^"]+"', txt):
+                    print(f"  危险 {f} 含真实密钥")
+                    leaks.append(f)
+                continue
+            if base in FORBIDDEN_NAMES and not allowed:
+                print(f"  危险 {f} 被追踪了")
+                leaks.append(f)
+            if any(f.startswith(p) for p in FORBIDDEN_PREFIX):
+                print(f"  危险 {f} 被追踪了")
+                leaks.append(f)
+        if not leaks:
+            print("  OK 没有私人文件被追踪")
         big = [f for f in files
                if os.path.exists(os.path.join(BASE_DIR, f))
                and os.path.getsize(os.path.join(BASE_DIR, f)) > 5 * 1024 * 1024]
         for f in big:
             print(f"  过大 {f}（>5MB）")
+        if not big:
+            print("  OK 没有超过 5MB 的文件")
 
     print("\n=== 4. 引擎自检 ===")
     sys.path.insert(0, BASE_DIR)

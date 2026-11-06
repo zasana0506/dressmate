@@ -1,0 +1,15 @@
+# dressmate 运行时不需要任何第三方依赖。
+#
+# 服务与引擎只用 Python 标准库（http.server / json / urllib / re …），
+# 这是它能被随手自托管的原因：不用 pip install，不用管版本冲突，
+# 换个 Python 3.9+ 就能跑。
+#
+# 只有开发工具需要额外的东西，且都是可选的：
+#
+#   tools/fix_colors.py     调色，需要 Pillow
+#   tools/fix_jewelry.py    配饰归类，需要 Pillow
+#   pip install pillow
+#
+# 紫微斗数「今日幸运穿搭」（可选功能）需要 Node.js 与 iztro：
+#   npm install iztro
+#   export ZIWEI_NODE_MODULES=$(npm root -g)
