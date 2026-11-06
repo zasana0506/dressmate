@@ -3,6 +3,14 @@
 #   打开 http://localhost:8848
 #
 # 数据都在 ./data 卷里，容器删了也不丢。
+#
+# 端口默认只绑本机（127.0.0.1），局域网里的别人访问不到。
+# 这是故意的：衣橱和照片是私人的，一部署就全网可见不是好默认值。
+# 想让手机连同一个 WiFi 访问，把下面那行改成：
+#     - "8848:8848"
+# 或者临时用环境变量放开：
+#     DRESSMATE_BIND=0.0.0.0 docker compose up -d
+# 放到公网请自己套一层反向代理并加 HTTPS 与鉴权。
 
 services:
   dressmate:
@@ -11,7 +19,8 @@ services:
     container_name: dressmate
     restart: unless-stopped
     ports:
-      - "8848:8848"
+      # 默认只绑本机。要局域网访问：改端口映射，或设 DRESSMATE_BIND=0.0.0.0
+      - "${DRESSMATE_BIND:-127.0.0.1}:8848:8848"
     volumes:
       # 衣橱、照片、城市表、日程都在这里
       - ./data:/data

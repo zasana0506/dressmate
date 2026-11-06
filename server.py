@@ -112,6 +112,47 @@ def get_weather(city):
     return w
 
 
+def safe_join(base_dir, rel):
+    """把 URL 路径拼进目录，但不许拼出目录外。返回 None 表示越界。
+
+    为什么必须用 realpath 判断，光看字符串里的 ".." 不够：
+    浏览器和代理可能先把 %2e%2e 解成 ..，也可能不解；
+    符号链接更是字符串里根本看不出来。
+    所以这里先拼路径，再 realpath 解析（消掉 .. 和软链），
+    最后确认结果确实还在 base_dir 里面。
+
+    攻击长这样：GET /..%2fwardrobe%2fwardrobe.json
+    不校验的话，能把整个衣橱（几千条标注）读出去。
+    """
+    if not rel:
+        return None
+    # 绝对路径直接拒绝（Windows 的 "C:\..." 和 POSIX 的 "/..."）
+    if os.path.isabs(rel) or (len(rel) > 1 and rel[1] == ":"):
+        return None
+    base = os.path.realpath(base_dir)
+    target = os.path.realpath(os.path.join(base, rel))
+    # 必须在 base 之内：加上 os.sep 是为了防 "web_evil" 这类前缀相同的目录
+    if target == base or target.startswith(base + os.sep):
+        return target
+    return None
+
+
+def is_private_file(rel):
+    """这个路径是不是「不该被静态服务」的文件。
+
+    规则：文件名以 .local. 结尾，或带常见的敏感后缀，一律拒绝。
+    这是兜底——正确做法是把这类文件放在 web/ 之外（见 .gitignore 的说明），
+    但万一有人又放进来了，这里能挡住。
+    """
+    name = os.path.basename(rel).lower()
+    if ".local." in name or name.endswith(".local"):
+        return True
+    for suf in (".key", ".pem", ".env", ".secret"):
+        if name.endswith(suf):
+            return True
+    return False
+
+
 def city_of(city):
     """这次请求用的是哪座城——中文名、省份、坐标都给出去，前端好显示。"""
     info = CITY.resolve(city) or CITY.resolve("北京")
@@ -224,15 +265,24 @@ notes: 一句话依据，如 "长袖+衬衫领+硬挺面料"
 def cloud_cfg():
     """读视觉模型的 endpoint + publishableKey。
 
-    两个来源，后者覆盖前者：
-      web/cloud-config.js        仓库里的模板，默认是空的
-      web/cloud-config.local.js  本地私有配置，不进仓库（有密钥的才放这）
+    来源有三个，后者覆盖前者：
+      环境变量 DRESSMATE_CLOUD_ENDPOINT / DRESSMATE_CLOUD_KEY
+      DATA_DIR/cloud-config.local.js  本地私有配置，不在可静态服务的目录里
+      web/cloud-config.js             仓库里的模板，默认是空的
 
-    环境变量优先级更高，见 openai_cfg()。
+    为什么私有配置不放 web/ 下：web/ 整个目录都是静态可访问的，
+    放进去等于把密钥挂在 /cloud-config.local.js 上。
     """
-    for fn in ("cloud-config.js", "cloud-config.local.js"):
+    ep_env = (os.environ.get("DRESSMATE_CLOUD_ENDPOINT") or "").strip()
+    key_env = (os.environ.get("DRESSMATE_CLOUD_KEY") or "").strip()
+    if ep_env and key_env:
+        return ep_env.rstrip("/"), key_env
+
+    # DATA_DIR 不在 web/ 下，静态服务够不着
+    private = os.path.join(PATHS.DATA_DIR, "cloud-config.local.js")
+    for fp in (private, os.path.join(WEB_DIR, "cloud-config.js")):
         try:
-            txt = open(os.path.join(WEB_DIR, fn), encoding="utf-8").read()
+            txt = open(fp, encoding="utf-8").read()
         except Exception:
             continue
         ep = re.search(r'endpoint\s*:\s*"([^"]+)"', txt)
@@ -590,9 +640,11 @@ class Handler(BaseHTTPRequestHandler):
 
         if p.path.startswith("/photos/"):
             raw = p.path[len("/photos/"):]
+            # basename 已经去掉了目录部分，这里再过一遍 realpath 校验，
+            # 防止 PHOTO_DIR 本身是软链时指到别处
             name = os.path.basename(urllib.parse.unquote(raw))
-            fp = os.path.join(PHOTO_DIR, name)
-            if os.path.exists(fp):
+            fp = safe_join(PHOTO_DIR, name) if name else None
+            if fp and os.path.exists(fp):
                 ext = os.path.splitext(fp)[1].lower()
                 ct = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
                       ".webp": "image/webp", ".gif": "image/gif"}.get(ext, "application/octet-stream")
@@ -602,8 +654,12 @@ class Handler(BaseHTTPRequestHandler):
 
         # 静态文件
         rel = "index.html" if p.path == "/" else urllib.parse.unquote(p.path.lstrip("/"))
-        fp = os.path.join(WEB_DIR, rel)
-        if os.path.exists(fp) and os.path.isfile(fp):
+        # 私有配置不进静态服务：这类文件常带密钥，
+        # 就算误放进来也不该被 URL 直接读到。
+        if is_private_file(rel):
+            return self._send(404, "not found", "text/plain")
+        fp = safe_join(WEB_DIR, rel)
+        if fp and os.path.exists(fp) and os.path.isfile(fp):
             ext = os.path.splitext(fp)[1].lower()
             ct = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
                   ".css": "text/css; charset=utf-8", ".json": "application/json; charset=utf-8"}.get(

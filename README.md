@@ -139,10 +139,23 @@ environment:
 
 ## 隐私
 
-- 照片和衣橱数据**只存在你自己的机器或你自己的卷里**，服务端不外传
-- 天气走 Open-Meteo，只发经纬度，不发任何个人信息
-- 只有你显式配置了 AI 端点时，照片才会发到那个端点
-- 紫微斗数「今日幸运穿搭」是可选的娱乐功能，需要 Node.js，默认关闭
+Photos and wardrobe data **stay on your own machine, in your own volume**. There are exactly
+three paths where data leaves it, and all three are listed here:
+
+| When | What leaves | Where it goes |
+|---|---|---|
+| Every recommendation | Your coordinates | Open-Meteo (free weather API) — no identifying info |
+| Using "photo auto-detect" | **The photo itself** | The vision model endpoint you configured |
+| Filling in `cloud-config.local.js` | **The photo itself** | The cloud service named in that file |
+
+- **Nothing is sent by default.** `web/cloud-config.js` in the repo is an empty template.
+- Prefer environment variables for your own model (see the config table above) — the key
+  never leaves your machine.
+- If you fill in `data/cloud-config.local.js` (WorkBuddy cloud), photos go there. That file
+  is **not** committed to the repo, and **not** reachable over HTTP (private files under
+  `web/` always return 404).
+- The Ziwei Dou Shu "lucky outfit" feature is optional, needs Node.js, and is off by default.
+- `docker compose` binds to `127.0.0.1` only, so other devices on your LAN cannot reach it.
 
 ## 跑测试
 

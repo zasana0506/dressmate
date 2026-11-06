@@ -38,6 +38,9 @@ env/
 Thumbs.db
 
 # 本地私有云服务配置（含发布密钥）
+# 放在 data/ 而不是 web/：web/ 整个目录都能被静态服务读到，
+# 放那儿等于把密钥挂在 /cloud-config.local.js 上。
+data/cloud-config.local.js
 web/cloud-config.local.js
 
 # 一次性导入脚本：针对特定数据集，不通用
