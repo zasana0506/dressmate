@@ -53,11 +53,11 @@ def fetch(lat, lon, tz="Asia/Shanghai", timeout=15, retries=3):
         return cached
     # 连缓存都没有（首次启动就没网）→ 用气候均值兜底，
     # 宁可给一个大致准确的温度，也不要让整个推荐页面报错打不开。
-    fallback = _fallback(lat, lon)
-    if fallback:
-        fallback["stale"] = True
-        fallback["error"] = str(last_exc)
-        return fallback
+    fb = fallback(lat, lon)
+    if fb:
+        fb["stale"] = True
+        fb["error"] = str(last_exc)
+        return fb
     raise last_exc
 
 
@@ -68,7 +68,7 @@ _CLIMATE = {
 }
 
 
-def _fallback(lat, lon):
+def fallback(lat, lon):
     """用月份均值 + 纬度修正造一份天气。
 
     纬度越高越冷：每偏离 30 度均温降约 4 度。

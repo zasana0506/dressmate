@@ -68,7 +68,15 @@ def get_weather(city):
     now = time_now()
     if key in _cache and now - _cache[key][0] < 900:
         return _cache[key][1]
-    w = WX.fetch(info["lat"], info["lon"])
+    try:
+        w = WX.fetch(info["lat"], info["lon"])
+    except Exception as exc:
+        # 天气拿不到不该拖垮整个推荐——用季节估算值继续，
+        # 并把原因带出去，前端可以提示「天气是估算的」。
+        _log(f"天气获取失败，改用估算值: {exc}")
+        w = WX.fallback(info["lat"], info["lon"])
+        w["stale"] = True
+        w["error"] = str(exc)
     _cache[key] = (now, w)
     return w
 
