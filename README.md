@@ -4,7 +4,7 @@
 
 **拍照建衣橱，按天气和场合给穿搭建议。**
 
-12 条可解释的规则代替大模型：零 token 成本，断网也能用，每条建议都讲得清为什么。
+19 条可解释的规则代替大模型：零 token 成本，断网也能用，每条建议都讲得清为什么。
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [贡献指南](CONTRIBUTING.md)
 
@@ -26,7 +26,8 @@
 | 规则能改吗 | 不能 | 改一个数字，全局生效 |
 | 换一次模型结果会变吗 | 会 | 不会 |
 
-核心是一张 **12 条罚分表**（`engine/styling.py`），外加温度曲线、正式度分档、配色协调、配件分级：
+核心是 12 条风格罚分（`engine/styling.py`）+ 7 条配件校验（`engine/extras.py`），
+外加温度曲线、正式度分档、配色协调：
 
 ```python
 PENALTY = {
@@ -40,6 +41,24 @@ PENALTY = {
     # ...
 }
 ```
+
+The other 7 accessory checks (`engine/extras.py`) cover the details outside the core outfit:
+
+```python
+# belt_mismatch   belt doesn't match the shoes
+# sock_contrast   light socks with dark dress pants
+# tie_clash       tie clashes with the shirt
+# bag_jump        bag colour doesn't fit the rest
+# skirt_short     skirt length doesn't suit the occasion
+# hosiery_gap     wrong hosiery shade under a formal dress
+# sheer_bottom    see-through bottom
+```
+
+They never enter the candidate pool — a belt only goes with the shoes, socks only with
+the pants, the tie is decided by the shirt and outer layer. Searching variables with no
+freedom of choice is a waste of time. What stylists actually do is settle the core first,
+then close the accessories around it. So this layer does two things: **infer** what should
+go with it, and **verify** whether what you picked is right.
 
 风格分用**乘法**权重进入总分（`score *= 1 - 0.40 * (1 - style)`）。这一点很关键：早先用减法，「运动鞋配西裤」只值 0.03 分，会被保暖细节顶掉；改成乘法之后它才真正压得住。
 
