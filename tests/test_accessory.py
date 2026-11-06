@@ -8,6 +8,9 @@
 4. 没有类型词的「彩色首饰」宁可不上。
 """
 import unittest
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+import _env  # noqa: F401  测试环境隔离
 
 from engine import recommend as REC
 

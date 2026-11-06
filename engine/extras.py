@@ -21,6 +21,7 @@
 「领带尖落在皮带扣」这几条只能写在文案里当提醒。现在能落到具体单品上。
 """
 from . import config as C
+from . import identity as ID
 from .styling import brightness, family
 from .styling import lane as _style_lane
 
@@ -335,7 +336,23 @@ def check(chosen, wardrobe, ctx, lan=None, bucket=None):
     picked, issues = [], []
 
     def avail(role):
-        return [it for it in bucket.get(role, []) if it.get("status", "clean") == "clean"]
+        """这个角色下可用的配件。
+
+        这里同时做身份过滤：领带是男士正装配饰，皮带是成人配件。
+        衣橱里领带的 gender 标签基本是空的（它们按款式命名，不按性别命名），
+        所以光靠标签挡不住，得按角色规则来。
+        """
+        ident = (ctx.get("identity") or {})
+        who = ident.get("gender")
+        age = ident.get("age")
+        out = []
+        for it in bucket.get(role, []):
+            if it.get("status", "clean") != "clean":
+                continue
+            if not ID.accessory_allowed(role, it, who, age):
+                continue
+            out.append(it)
+        return out
 
     # —— 皮带：必须与皮鞋同色系（例外：鞋是白/米白时，棕黑都行）
     if req >= 3 and _is_shoe_formal(shoe):

@@ -3,6 +3,22 @@
 import re
 
 from . import config as C
+from . import identity as ID
+
+
+def _identity(profile=None):
+    """读穿衣者的性别与年龄。
+
+    profile 传了就用它（测试可以注入隔离的档案），
+    没传就读磁盘上的 data/profile.json。读不到就返回空字典（等于不过滤）。
+    """
+    if profile is None:
+        profile = ID.load_profile()
+    return {
+        "gender": ID.gender_of(profile),
+        "age": ID.age_of(profile),
+        "profile": profile,
+    }
 
 
 def classify_event(title, note=""):
@@ -30,11 +46,15 @@ def classify_event(title, note=""):
     return level, sport, tag, sorted(set(matched))
 
 
-def build_context(events, weather=None):
+def build_context(events, weather=None, profile=None):
     """把一天的日程聚合成一个穿衣情境。
 
     规则：取当天"最高正式度要求"作为主基调（穿得差一点比穿得太正式好得多），
     同时记录是否有运动项目、是否几乎全程室内（影响是否需要抗造型的外层）。
+
+    profile: 穿衣者档案（出生日期+性别）。不传就读磁盘上的 data/profile.json。
+    测试要传隔离的档案，否则会被开发者本机的档案影响——比如档案里写了
+    「8 岁」，正式度就被封顶到休闲档，用例里断言的正式度自然对不上。
     """
     parsed = []
     for ev in events or []:
@@ -79,6 +99,32 @@ def build_context(events, weather=None):
         "events": parsed,
         "advice": advice,
     }
+    # 穿衣者身份（性别/年龄）。推荐引擎靠它排除不合适的单品与配件——
+    # 领带给女生、皮带给小孩，都是靠这里挡住的。
+    ctx["identity"] = _identity(profile)
+    who = ctx["identity"].get("gender")
+    age = ctx["identity"].get("age")
+    if who or age is not None:
+        bits = []
+        if who:
+            bits.append(f"{who}性")
+        if age is not None:
+            bits.append(f"{age} 岁")
+        ctx["advice"].append(
+            "已按你的档案（" + "、".join(bits) + "）筛选："
+            + ("不给女性配领带这类男士正装配件；" if who == "女" else "")
+            + ("不给未成年人配皮带这类成人配件。" if age is not None and age < ID.CHILD_AGE else "")
+            + "档案可在「幸运」那栏改。")
+    # 年纪小的人正式度要求要往下压一档：小孩不该被推西装通勤
+    ceil = ID.formality_ceiling(ctx["identity"])
+    if ceil is not None and formality > ceil:
+        ctx["formality"] = ceil
+        ctx["formality_label"] = C.FORMALITY_LABELS[ceil]
+        ctx["formality_capped"] = True
+        ctx["advice"].append(
+            f"按年龄（{ctx['identity'].get('age')} 岁）把正式度从"
+            f"「{C.FORMALITY_LABELS[formality]}」调到"
+            f"「{C.FORMALITY_LABELS[ceil]}」。")
     if weather:
         ctx["slot_temp"] = {
             "base": weather["feel_max"],

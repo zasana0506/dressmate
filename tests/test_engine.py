@@ -15,6 +15,10 @@ import unittest
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
+
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+import _env  # noqa: F401  测试环境隔离（不读本机真实档案）
 sys.path.insert(0, os.path.join(BASE_DIR, "tools"))
 
 from engine import config as C            # noqa: E402

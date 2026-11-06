@@ -12,6 +12,7 @@ import datetime
 from . import config as C
 from . import styling as STYLE
 from . import extras as EXTRAS
+from . import identity as ID
 
 
 # ---------------------------------------------------------------- 工具
@@ -225,6 +226,7 @@ def build_candidates(wardrobe, ctx, weather, laundry=None, today=None,
     formality_slack: 允许的正式度降级档数。0 = 只接受完全符合的，
     1 = 允许低一档，2 = 允许低两档。用于在衣橱不满足要求时优雅降级。
     formality_override: 直接指定正式度要求（运动套装用 0）。
+    identity: 穿衣者身份（性别/年龄）。见 engine/identity.py。
     """
     today = today or datetime.date.today()
     laundry = laundry or {}
@@ -232,6 +234,12 @@ def build_candidates(wardrobe, ctx, weather, laundry=None, today=None,
     band = band_of(weather["feel_mean"])
     req = C.TEMPERATURE_BANDS[band]["required"]
     need_formal = ctx["formality"] if formality_override is None else formality_override
+
+    # 身份过滤：女用户不出现标着 men 的单品，男用户不出现标着 women 的。
+    # 档案没填就不过滤——不能因为没填档案就推不出东西。
+    ident = ctx.get("identity") or {}
+    gender = ident.get("gender")
+    age = ident.get("age")
 
     pools = {s: [] for s in C.SLOT_ORDER}
 
@@ -255,6 +263,11 @@ def build_candidates(wardrobe, ctx, weather, laundry=None, today=None,
         # 非穿搭件直接跳过：批量导入的「饰品」文件夹里混着臂章、标牌、
         # 瓷砖找平器这类电商杂货，它们的 slot 也是 accessory
         if item.get("non_wearable") or item.get("category") == "junk":
+            continue
+        # 性别冲突的单品不进候选池。
+        # 衣橱里本来就有 gender 标签（women 178 件、men 960 件），
+        # 不用就等于白标——给女生推男士衬衫就是这么来的。
+        if not ID.item_allowed(item, gender):
             continue
         # 配件角色（皮带/袜/包/领带/丝袜）不进主候选池：
         # 它们由 extras 层按主体反推（皮带跟皮鞋、袜子跟裤子），没有独立自由度；
