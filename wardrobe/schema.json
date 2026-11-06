@@ -1,0 +1,163 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "衣橱单品结构",
+  "type": "object",
+  "required": [
+    "version",
+    "items"
+  ],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "slot",
+          "category",
+          "color",
+          "clo",
+          "formality"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "唯一ID，如 w001"
+          },
+          "name": {
+            "type": "string",
+            "description": "中文名，如 白色棉质T恤"
+          },
+          "photo": {
+            "type": "string",
+            "description": "照片相对路径 photos/w001.jpg"
+          },
+          "slot": {
+            "type": "string",
+            "enum": [
+              "base",
+              "mid",
+              "outer",
+              "bottom",
+              "shoes",
+              "accessory"
+            ],
+            "description": "槽位：base内层/mid中层/outer外层/bottom下装/shoes鞋履/accessory配饰"
+          },
+          "category": {
+            "type": "string",
+            "description": "细分品类：tshirt/shirt/sweater/jacket/coat/down_jacket/trousers/jeans/skirt/dress/shoes_sneakers/shoes_leather/boots/scarf/hat/gloves/umbrella/belt/sunglasses 等"
+          },
+          "color": {
+            "type": "string",
+            "description": "主色中文：黑/白/灰/藏青/米/驼/红/蓝/绿 等"
+          },
+          "color_hex": {
+            "type": "string"
+          },
+          "material": {
+            "type": "string",
+            "description": "棉/羊毛/羊绒/牛仔/皮革/涤纶/羽绒/亚麻 等"
+          },
+          "clo": {
+            "type": "number",
+            "description": "保暖值 0.1-1.2，0.15≈纯棉T恤，0.95≈厚羽绒"
+          },
+          "thickness": {
+            "type": "string",
+            "enum": [
+              "极薄",
+              "薄",
+              "适中",
+              "厚",
+              "极厚"
+            ]
+          },
+          "formality": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4,
+            "description": "0居家休闲 1日常休闲 2常规办公 3商务会面 4正式场合"
+          },
+          "waterproof": {
+            "type": "boolean"
+          },
+          "windproof": {
+            "type": "boolean"
+          },
+          "sun_protective": {
+            "type": "boolean"
+          },
+          "season": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "spring",
+                "summer",
+                "autumn",
+                "winter"
+              ]
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "clean",
+              "dirty",
+              "laundry",
+              "dryclean",
+              "stored"
+            ],
+            "description": "clean可穿/dirty待洗/laundry在洗/dryclean干洗中/stored收纳"
+          },
+          "last_worn": {
+            "type": "string",
+            "description": "最近穿着日期 YYYY-MM-DD"
+          },
+          "wear_count": {
+            "type": "integer"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "men",
+              "women",
+              "neutral"
+            ],
+            "description": "适用性别：men男/women女/neutral中性（情侣款、配饰）。决定跑女装还是男装得体规矩"
+          },
+          "layer_role": {
+            "type": "string",
+            "enum": [
+              "belt",
+              "sock",
+              "bag",
+              "tie",
+              "hosiery",
+              "outerwear"
+            ],
+            "description": "配件角色：belt皮带/sock袜子/bag包/tie领带/hosiery丝袜。这类单品不进主候选池（无保暖值、无独立自由度），由 engine/extras.py 按主体反推"
+          },
+          "length": {
+            "type": "string",
+            "enum": [
+              "mini",
+              "knee",
+              "midi",
+              "maxi"
+            ],
+            "description": "裙长：mini短/knee及膝/midi中长/maxi长。仅 skirt、dress 需要，女装铁律判裙摆位置用"
+          }
+        }
+      }
+    }
+  }
+}

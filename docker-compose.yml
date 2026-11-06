@@ -1,0 +1,32 @@
+# 一条命令跑起来：
+#   docker compose up -d
+#   打开 http://localhost:8848
+#
+# 数据都在 ./data 卷里，容器删了也不丢。
+
+services:
+  dressmate:
+    build: .
+    image: dressmate:latest
+    container_name: dressmate
+    restart: unless-stopped
+    ports:
+      - "8848:8848"
+    volumes:
+      # 衣橱、照片、城市表、日程都在这里
+      - ./data:/data
+    environment:
+      # 可选：接一个 OpenAI 兼容的视觉模型，网页上就能「拍照自动识别」。
+      # 不配也能用——手工录入衣橱，或直接用文件名批量导入。
+      # OLLAMA 示例：
+      #   DRESSMATE_AI_BASE_URL: http://host.docker.internal:11434/v1
+      #   DRESSMATE_AI_MODEL: qwen2.5vl
+      # 云端示例：
+      #   DRESSMATE_AI_BASE_URL: https://api.openai.com/v1
+      #   DRESSMATE_AI_API_KEY: sk-...
+      #   DRESSMATE_AI_MODEL: gpt-4o-mini
+      DRESSMATE_AI_BASE_URL: ${DRESSMATE_AI_BASE_URL:-}
+      DRESSMATE_AI_API_KEY: ${DRESSMATE_AI_API_KEY:-}
+      DRESSMATE_AI_MODEL: ${DRESSMATE_AI_MODEL:-}
+      # 可选：让容器跟宿主时区一致（默认就是 Asia/Shanghai）
+      TZ: ${TZ:-Asia/Shanghai}

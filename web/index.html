@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>今日穿搭</title>
+<style>
+  :root{
+    --bg:#F7F7F5; --card:#FFFFFF; --ink:#1C1C1A; --ink2:#5F5E5A; --ink3:#8A8983;
+    --line:#E6E4DD; --accent:#185FA5; --accent-bg:#E6F1FB;
+    --warm:#BA7517; --warm-bg:#FAEEDA; --cool:#0F6E56; --cool-bg:#E1F5EE;
+    --danger:#A32D2D; --danger-bg:#FCEBEB;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .wrap{max-width:560px;margin:0 auto;padding:16px 16px 40px}
+
+  header{position:sticky;top:0;background:rgba(247,247,245,.92);backdrop-filter:blur(12px);
+    padding:14px 0 10px;z-index:20;border-bottom:1px solid var(--line)}
+  .hrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  h1{font-size:19px;font-weight:600;margin:0}
+  .date{font-size:13px;color:var(--ink3)}
+  .tabs{display:flex;gap:6px;margin-top:10px}
+  .tab{flex:1;text-align:center;padding:7px 0;border-radius:10px;font-size:14px;
+    background:var(--card);border:1px solid var(--line);color:var(--ink2);cursor:pointer;transition:.15s}
+  .tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-top:12px}
+  .ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .ch h2{font-size:15px;font-weight:600;margin:0;display:flex;align-items:center;gap:7px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+
+  /* 天气条 */
+  .wx{display:flex;align-items:flex-start;gap:18px}
+  .wxt{font-size:38px;font-weight:300;line-height:1;letter-spacing:-1px}
+  .wxu{font-size:13px;color:var(--ink3);margin-left:2px}
+  .wxm{flex:1;font-size:13px;color:var(--ink2)}
+  .wxm b{display:block;color:var(--ink);font-weight:500;font-size:14px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .chip{font-size:12px;padding:3px 9px;border-radius:20px;background:var(--bg);color:var(--ink2);border:1px solid var(--line)}
+  .chip.hot{background:var(--warm-bg);color:#633806;border-color:#EF9F27}
+  .chip.cool{background:var(--accent-bg);color:#0C447C;border-color:#85B7EB}
+
+  /* 分层 */
+  .layer{display:flex;gap:12px;padding:13px 0;border-bottom:1px dashed var(--line)}
+  .layer:last-child{border-bottom:0;padding-bottom:0}
+  .layer:first-child{padding-top:0}
+  .lslot{flex:0 0 44px;font-size:12px;color:var(--ink3);padding-top:2px}
+  .lmain{flex:1;min-width:0}
+  .lname{font-size:15px;font-weight:500;margin-bottom:3px}
+  .lmeta{font-size:12px;color:var(--ink3);margin-bottom:5px}
+  .lreason{font-size:13px;color:var(--ink2);line-height:1.55}
+  .lphoto{flex:0 0 56px;width:56px;height:56px;border-radius:11px;background:var(--bg);
+    border:1px solid var(--line);object-fit:cover;display:block}
+  .lphoto.ph{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--ink3)}
+
+  /* 方案 */
+  .rank{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
+    border-radius:7px;background:var(--ink);color:#fff;font-size:12px;font-weight:600}
+  .score{font-size:12px;color:var(--ink3)}
+  .score b{color:var(--ink);font-weight:600}
+  .bars{display:flex;gap:6px;margin-top:12px}
+  .bar{flex:1}
+  .bar .bl{font-size:10px;color:var(--ink3);margin-bottom:3px;white-space:nowrap}
+  .bar .bt{height:4px;border-radius:3px;background:var(--line);overflow:hidden}
+  .bar .bf{height:100%;border-radius:3px;background:var(--accent)}
+  .note{background:var(--warm-bg);border:1px solid #EF9F27;color:#633806;border-radius:11px;
+    padding:11px 13px;font-size:13px;margin-top:12px;line-height:1.55}
+  .note.sport{background:var(--cool-bg);border-color:#5DCAA5;color:#085041}
+  .note.info{background:var(--accent-bg);border-color:#85B7EB;color:#0C447C}
+  /* 「这身的坑」：比警告轻，比正文重，落在这身衣服的下方 */
+  .pitfalls{margin-top:12px;padding:11px 13px;border-radius:11px;background:var(--bg);
+    border:1px dashed var(--line);font-size:12.5px;color:var(--ink2);line-height:1.6}
+  .pitfalls b{display:block;color:var(--ink);font-size:12px;margin-bottom:5px;letter-spacing:.02em}
+  /* 「配件收口」：皮带袜子包领带——衣橱里有就戴哪条，没有就说还差什么。
+     用实线区分于上面虚线的「坑」：这里是清单，不是警告 */
+  .extras{margin-top:10px;padding:11px 13px;border-radius:11px;background:var(--bg);
+    border:1px solid var(--line);border-left:3px solid var(--cool);
+    font-size:12.5px;color:var(--ink2);line-height:1.65}
+  .extras b{display:block;color:var(--ink);font-size:12px;margin-bottom:6px;letter-spacing:.02em}
+  .extras .have{color:var(--ink2)}
+  .extras .have,.extras .lack,.extras .bad{display:flex;gap:0;align-items:baseline}
+  .extras .have i,.extras .lack i,.extras .bad i{font-style:normal;font-size:10px;
+    padding:1px 5px;border-radius:4px;margin-right:6px;flex:none;
+    background:var(--card);border:1px solid var(--line);line-height:1.5}
+  .extras .have i{color:var(--cool)}
+  .extras .lack{color:var(--ink3);margin-top:3px}
+  .extras .lack i{color:var(--warm)}
+  .extras .bad{color:var(--danger);margin-top:3px}
+  .extras .bad i{color:var(--danger)}
+
+  /* 配件缺口：三套共用一份，所以放在顶部而不是每张卡里。
+     「要补」和「可选」必须分开写——皮鞋没袜子是穿错，没系领带只是少一层讲究，
+     混在一起说，用户会以为系统在催他买一整套 */
+  .gapbox{margin-bottom:12px;padding:12px 14px;border-radius:12px;background:var(--bg);
+    border:1px solid var(--line);border-left:3px solid var(--warm);
+    font-size:12.5px;color:var(--ink2);line-height:1.7}
+  .gapbox>b{display:block;color:var(--ink);font-size:12px;margin-bottom:7px;letter-spacing:.02em}
+  .gapbox .greq,.gapbox .gopt{display:flex;align-items:baseline}
+  .gapbox .gopt{color:var(--ink3);margin-top:3px}
+  .gapbox i{font-style:normal;font-size:10px;padding:1px 5px;border-radius:4px;
+    margin-right:6px;flex:none;background:var(--card);border:1px solid var(--line);line-height:1.5}
+  .gapbox .greq i{color:var(--warm)}
+  .gapbox .gopt i{color:var(--ink3)}
+  .gapbox b+b,.gapbox .greq b,.gapbox .gopt b{display:inline;font-size:12.5px;margin:0}
+  .gapbox .gfoot{margin-top:7px;padding-top:7px;border-top:1px dashed var(--line);
+    color:var(--ink3);font-size:11.5px}
+
+  /* 城市选择：输入框 + 浮层候选。用自定义列表而不是 <datalist>，
+     是为了每行能带省份——「东莞 · 广东」才不会和同名小镇混 */
+  .citypick{position:relative}
+  .citypick input{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);
+    background:var(--bg);font-family:inherit;font-size:14px;color:var(--ink)}
+  .citypick input:focus{outline:none;border-color:var(--accent);background:var(--card)}
+  .citylist{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:40;
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,.13);max-height:238px;overflow:auto}
+  .citylist .opt{padding:9px 12px;cursor:pointer;font-size:13.5px;color:var(--ink);
+    display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+  .citylist .opt:hover{background:var(--accent-bg)}
+  .citylist .opt .pv{color:var(--ink3);font-size:11.5px;flex:none}
+  .citylist .opt.none{color:var(--ink3);cursor:default;font-size:12.5px}
+  .citylist .opt.none:hover{background:transparent}
+  .cityhint{margin:6px 0 10px;font-size:11.5px;color:var(--ink3);line-height:1.5}
+
+  /* 衣橱 */
+  .wg{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .witem{background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:8px;cursor:pointer}
+  .witem.off{opacity:.45}
+  .wimg{width:100%;aspect-ratio:1;border-radius:8px;background:#EDEBE4;object-fit:cover;display:block;margin-bottom:6px}
+  .wimg.ph{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--ink3)}
+  .wname{font-size:11px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;
+    -webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .wtag{font-size:10px;color:var(--ink3);margin-top:3px}
+  .fslot{font-size:11px;color:var(--ink3);margin-bottom:8px}
+  .empty{text-align:center;padding:30px 20px;color:var(--ink3);font-size:14px}
+  .btn{background:var(--ink);color:#fff;border:0;border-radius:10px;padding:10px 16px;
+    font-size:14px;font-family:inherit;cursor:pointer;width:100%;margin-top:12px}
+  .btn.ghost{background:var(--bg);color:var(--ink2);border:1px solid var(--line)}
+  input{font-family:inherit;font-size:14px;padding:10px;border-radius:10px;
+    border:1px solid var(--line);background:var(--card);color:var(--ink);outline:none}
+  input:focus{border-color:var(--accent)}
+  select{outline:none}
+  .wearbtn{width:100%;margin-top:14px;background:var(--cool-bg);color:#085041;
+    border:1px solid #5DCAA5;border-radius:10px;padding:9px;font-size:13px;
+    font-family:inherit;cursor:pointer;transition:.15s}
+  .wearbtn:hover{background:#C9EBDD}
+  .wearbtn.done{background:var(--bg);color:var(--ink3);border-color:var(--line)}
+  .segh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .badge{font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);
+    background:var(--bg);color:var(--ink2)}
+  .badge.change{background:var(--warm-bg);color:#633806;border-color:#EF9F27}
+  .badge.keep{background:var(--cool-bg);color:#085041;border-color:#5DCAA5}
+  .chgline{font-size:12px;color:var(--ink2);background:var(--bg);border-radius:9px;
+    padding:8px 10px;margin-top:10px;line-height:1.6}
+  .minirow{display:flex;gap:8px;padding:6px 0;font-size:13px;border-bottom:1px dashed var(--line)}
+  .minirow:last-child{border-bottom:0}
+  .minirow .ms{flex:0 0 40px;color:var(--ink3);font-size:12px}
+  .minirow .mn{flex:1}
+  .del{background:none;border:0;color:var(--danger);font-size:12px;cursor:pointer;padding:0 4px}
+  .hide{display:none!important}
+  .foot{text-align:center;font-size:11px;color:var(--ink3);margin-top:22px}
+
+  /* 上传 */
+  .airow{display:flex;align-items:center;gap:10px;background:var(--cool-bg);
+    border:1px solid #5DCAA5;border-radius:12px;padding:10px 12px;margin-bottom:12px}
+  .aitext{flex:1;min-width:0}
+  .aitext b{display:block;font-size:13px;color:#085041;font-weight:600}
+  .aitext span{display:block;font-size:11px;color:#0F6E56;line-height:1.4;margin-top:1px}
+  .aimodel{font-size:11px;padding:4px 6px;border-radius:7px;border:1px solid #5DCAA5;
+    background:var(--card);color:#085041;font-family:inherit;max-width:104px}
+  .switch{position:relative;display:inline-block;width:38px;height:22px;flex:0 0 38px}
+  .switch input{opacity:0;width:0;height:0}
+  .switch span{position:absolute;inset:0;background:#C9C6BC;border-radius:22px;
+    transition:.18s;cursor:pointer}
+  .switch span:before{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;
+    background:#fff;border-radius:50%;transition:.18s}
+  .switch input:checked+span{background:var(--cool)}
+  .switch input:checked+span:before{transform:translateX(16px)}
+  .aibadge{font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid #5DCAA5;
+    background:var(--cool-bg);color:#085041}
+  .aibadge.name{background:var(--accent-bg);border-color:#85B7EB;color:#0C447C}
+  .aibadge.err{background:var(--danger-bg);border-color:#F09595;color:#791F1F}
+  .reai{background:none;border:1px solid var(--line);border-radius:6px;font-size:11px;
+    padding:2px 8px;color:var(--ink2);cursor:pointer;font-family:inherit}
+  .drop{border:2px dashed #C9C6BC;border-radius:14px;background:var(--bg);
+    text-align:center;padding:22px 14px;cursor:pointer;transition:.15s}
+  .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-bg)}
+  .dropicon{font-size:30px;line-height:1;color:var(--accent);font-weight:300}
+  .droptitle{font-size:14px;font-weight:500;margin-top:8px}
+  .dropsub{font-size:12px;color:var(--ink3);margin-top:3px}
+  .tipbox{background:var(--accent-bg);border:1px solid #85B7EB;color:#0C447C;
+    border-radius:11px;padding:11px 13px;font-size:12px;line-height:1.75;margin-top:12px}
+  .tipbox code{background:rgba(255,255,255,.7);padding:1px 5px;border-radius:4px;font-size:11px}
+  .upok{font-size:13px;color:var(--cool);margin-top:10px}
+  .uperr{font-size:13px;color:var(--danger);margin-top:10px}
+  .pend{display:flex;gap:11px;padding:12px 0;border-bottom:1px dashed var(--line)}
+  .pend:last-of-type{border-bottom:0}
+  .pend img{width:66px;height:66px;border-radius:10px;object-fit:cover;
+    background:var(--bg);border:1px solid var(--line);flex:0 0 66px}
+  .pend .pbody{flex:1;min-width:0}
+  .pend .prow{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
+  .pend input,.pend select{font-size:12px;padding:5px 7px;border-radius:7px;width:auto}
+  .pend .pin{width:100%}
+  .pend .pnum{width:62px}
+  .pend .psel{width:82px}
+  .conf{font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid var(--line)}
+  .conf.low{background:var(--danger-bg);color:#791F1F;border-color:#F09595}
+  .conf.mid{background:var(--warm-bg);color:#633806;border-color:#EF9F27}
+  .conf.high{background:var(--cool-bg);color:#085041;border-color:#5DCAA5}
+  .pdel{background:none;border:0;color:var(--danger);font-size:12px;cursor:pointer}
+  .editbtn{position:absolute;top:4px;right:4px;background:rgba(255,255,255,.92);
+    border:1px solid var(--line);border-radius:6px;width:22px;height:22px;
+    font-size:11px;line-height:1;cursor:pointer;color:var(--ink2);padding:0}
+  .witem{position:relative}
+  .btn.ghost.danger{color:var(--danger);border-color:#F09595;margin-top:8px}
+  .modal{position:fixed;inset:0;background:rgba(28,28,26,.45);z-index:50;
+    display:flex;align-items:center;justify-content:center;padding:16px}
+  .mbox{background:var(--card);border-radius:18px;width:100%;max-width:420px;
+    max-height:88vh;overflow:auto;padding:18px}
+  .xbtn{background:none;border:0;font-size:16px;color:var(--ink3);cursor:pointer}
+  .emphoto{width:100%;max-height:190px;object-fit:contain;border-radius:11px;
+    background:var(--bg);border:1px solid var(--line);margin-bottom:12px}
+  .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .formgrid label{font-size:11px;color:var(--ink3);display:block}
+  .formgrid label.full{grid-column:1/-1}
+  .formgrid input,.formgrid select{width:100%;margin-top:3px;font-size:14px}
+  /* 本地服务状态灯 */
+  .hb{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--mut);
+      background:var(--card);border:1px solid var(--line);border-radius:20px;padding:3px 9px 3px 7px;margin-left:8px}
+  .hb i{width:7px;height:7px;border-radius:50%;background:#c9ced6;display:block;flex:none}
+  .hb.on i{background:#22a06b;box-shadow:0 0 0 3px rgba(34,160,107,.16)}
+  .hb.off i{background:#e5484d;box-shadow:0 0 0 3px rgba(229,72,77,.16)}
+  .hb em{font-style:normal}
+  .uperr .relink{color:var(--ink);text-decoration:underline;cursor:pointer;font-weight:600}
+
+  /* 出差打包 */
+  .tripform{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .tripform label{font-size:11px;color:var(--ink3);display:block}
+  .tripform label.full{grid-column:1/-1}
+  .tripform input,.tripform select{width:100%;margin-top:3px;font-size:14px;padding:8px}
+  .quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .quick span{font-size:12px;padding:4px 10px;border-radius:20px;background:var(--bg);
+    border:1px solid var(--line);color:var(--ink2);cursor:pointer;transition:.15s}
+  .quick span.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .packrow{display:flex;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);align-items:flex-start}
+  .packrow:last-child{border-bottom:0;padding-bottom:0}
+  .pk{flex:0 0 48px;font-size:12px;color:var(--ink3);line-height:1.5}
+  .pk b{display:block;color:var(--ink);font-weight:500;font-size:13px}
+  .pv{flex:1;min-width:0}
+  .pitem{font-size:14px;margin-bottom:4px;line-height:1.5}
+  .pitem .sp{font-size:10px;color:var(--warm);border:1px solid #EF9F27;border-radius:20px;
+    padding:1px 6px;margin-left:5px;white-space:nowrap}
+  .pitem .ud{font-size:11px;color:var(--ink3);margin-left:6px}
+  .pshort{font-size:12px;color:var(--danger);margin-top:3px}
+  .dayrow{display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .dayrow:last-child{border-bottom:0;padding-bottom:0}
+  .ddate{flex:0 0 62px;color:var(--ink3);font-size:12px;line-height:1.5}
+  .dbody{flex:1;min-width:0;line-height:1.6}
+  .dband{font-size:11px;padding:1px 7px;border-radius:20px;background:var(--bg);
+    border:1px solid var(--line);color:var(--ink2);margin-left:4px;white-space:nowrap}
+  .ulist{margin:8px 0 0;padding-left:18px}
+  .ulist li{font-size:13px;color:var(--ink2);line-height:1.65;margin-bottom:3px}
+
+  /* 幸运穿搭 */
+  .luckhead{display:flex;align-items:center;gap:14px}
+  .luckstar{font-size:24px;font-weight:600;letter-spacing:3px;flex:0 0 auto}
+  .luckmeta{flex:1;font-size:12px;color:var(--ink3);line-height:1.65}
+  .swatches{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+  .sw{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink2);
+    background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:3px 10px 3px 4px}
+  .sw i{width:16px;height:16px;border-radius:50%;display:block;border:1px solid rgba(0,0,0,.14)}
+  .ltags{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+  .ltag{font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--line);
+    background:var(--bg);color:var(--ink2)}
+  .ltag.warm{background:var(--warm-bg);border-color:#EF9F27;color:#633806}
+  .ltag.peach{background:#FBEAF0;border-color:#ED93B1;color:#993556}
+  .ltag.travel{background:var(--accent-bg);border-color:#B5D4F4;color:#0C447C}
+  .ltag.study{background:#EAF1EE;border-color:#9CBBAF;color:#2C5B4A}
+  .lbl{font-size:11px;color:var(--ink3);margin-top:13px}
+  .disc{font-size:11px;color:var(--ink3);line-height:1.65;margin-top:14px;
+    padding-top:11px;border-top:1px solid var(--line)}
+  .lrow{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--line);
+    border-radius:12px;padding:9px 12px;margin-top:12px}
+  .lrow .ltext{flex:1;font-size:12px;color:var(--ink2);line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap" style="padding-bottom:0">
+    <div class="hrow">
+      <h1 id="title">今日穿搭</h1>
+      <span class="hb" id="hb" title="本地服务连接状态"><i></i><em>检测中</em></span>
+      <span class="date" id="dlabel">加载中…</span>
+    </div>
+    <div class="tabs">
+      <div class="tab on" data-tab="today">今日推荐</div>
+      <div class="tab" data-tab="timeline">分时段</div>
+      <div class="tab" data-tab="wardrobe">衣橱</div>
+      <div class="tab" data-tab="trip">出差</div>
+      <div class="tab" data-tab="luck">幸运</div>
+      <div class="tab" data-tab="schedule">日程</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section id="tab-today">
+    <div id="content"><div class="empty">正在计算…</div></div>
+  </section>
+
+  <section id="tab-timeline" class="hide">
+    <div id="tlcontent"></div>
+  </section>
+
+  <section id="tab-wardrobe" class="hide">
+    <div class="card">
+      <div class="ch"><h2><span class="dot"></span>上传衣服照片</h2><span class="score">照片只存在本机</span></div>
+      <div class="airow">
+        <label class="switch"><input type="checkbox" id="aiToggle" checked><span></span></label>
+        <div class="aitext"><b>AI 看图识别</b>
+          <span>自动判断上衣 / 裤子 / 外套、颜色、材质、保暖值</span></div>
+        <select id="aiModel" class="aimodel">
+          <option value="hy4free">Hy4（免费）</option>
+          <option value="glm-5.3-flash">GLM-5.3-Flash</option>
+          <option value="deepseek-v4.1-flash">DeepSeek-V4.1</option>
+          <option value="auto">Auto</option>
+        </select>
+      </div>
+      <div class="drop" id="dropZone">
+        <div class="dropicon">＋</div>
+        <div class="droptitle">点击选择，或把照片拖到这里</div>
+        <div class="dropsub">可一次选多张 · 手机可直接拍照 · 自动压缩后上传</div>
+        <input type="file" id="fileInput" accept="image/*" multiple hidden>
+      </div>
+      <div class="tipbox">
+        <b>开了 AI 识别后，文件名随便叫都行</b><br>
+        关掉 AI 时才靠文件名猜：<code>藏青长袖衬衫.jpg</code> → 内层 / clo 0.20 / 正式度 3<br>
+        无论哪种方式，<b>clo 保暖值</b>都建议过一眼——它最影响推荐准不准。
+      </div>
+      <div id="upStatus"></div>
+      <button class="btn ghost" id="scanBtn">扫描已放进 photos/ 文件夹的照片</button>
+    </div>
+
+    <div class="card hide" id="pendingCard">
+      <div class="ch"><h2><span class="dot"></span>待加入衣橱</h2><span class="score" id="pendCount"></span></div>
+      <div class="fslot">对照照片检查下面的属性，<b>clo 保暖值</b>和<b>正式度</b>最影响推荐结果。</div>
+      <div id="pendList"></div>
+      <button class="btn" id="importBtn">全部加入衣橱</button>
+    </div>
+
+    <div class="card">
+      <div class="ch"><h2><span class="dot"></span>我的衣橱</h2><span class="score" id="wcount"></span></div>
+      <div class="fslot">点图片切换「可穿 / 待洗 / 收纳」，点 ✎ 编辑属性</div>
+      <div id="wnotice"></div>
+      <!-- 这里不能再挂 class="wg"：渲染时每组会各自生成一个 .wg 网格，
+           容器若是网格会把每组挤进单个单元格（衣服多时格子被压成细条） -->
+      <div id="wgrid"></div>
+      <!-- 配件收口那几件的补录入口：衣橱里一条皮带都没有时，
+           「皮带与皮鞋同色」就没有实物可以挂靠，只能停在建议 -->
+      <div class="fslot" style="margin-top:14px">补录配件（clo≈0，不参与保暖计算，只用来收口）</div>
+      <div class="quick" id="extraQuick">
+        <span data-extra="belt">皮带</span>
+        <span data-extra="socks">袜子</span>
+        <span data-extra="bag">包</span>
+        <span data-extra="tie">领带</span>
+        <span data-extra="hosiery">丝袜</span>
+      </div>
+      <button class="btn ghost" id="clearDemoBtn">清理无照片的示例数据</button>
+    </div>
+  </section>
+
+  <div class="modal hide" id="editModal">
+    <div class="mbox">
+      <div class="ch"><h2><span class="dot"></span><span id="emTitle">编辑单品</span></h2>
+        <button class="xbtn" id="emClose">✕</button></div>
+      <img id="emPhoto" class="emphoto" alt="">
+      <div class="formgrid">
+        <label class="full">名称<input id="emName"></label>
+        <label>槽位<select id="emSlot">
+          <option value="base">内层</option><option value="mid">中层</option>
+          <option value="outer">外层</option><option value="bottom">下装</option>
+          <option value="shoes">鞋履</option><option value="accessory">配饰</option>
+        </select></label>
+        <label>正式度 0-4<input id="emFormal" type="number" min="0" max="4" step="1"></label>
+        <label>保暖 clo<input id="emClo" type="number" min="0" max="2" step="0.01"></label>
+        <label class="full">品类<select id="emCat">
+          <optgroup label="上装">
+            <option value="tshirt">T恤</option><option value="shirt">衬衫</option>
+            <option value="sweater">毛衣</option><option value="cardigan">开衫</option>
+            <option value="hoodie">卫衣</option><option value="polo">POLO</option>
+          </optgroup>
+          <optgroup label="外套">
+            <option value="jacket">夹克</option><option value="coat">大衣</option>
+            <option value="blazer">西装外套</option><option value="trench">风衣</option>
+            <option value="down_jacket">羽绒服</option>
+          </optgroup>
+          <optgroup label="下装">
+            <option value="trousers">长裤</option><option value="dress_pants">西裤</option>
+            <option value="jeans">牛仔裤</option><option value="chinos">休闲裤</option>
+            <option value="shorts">短裤</option><option value="skirt">半裙</option>
+            <option value="dress">连衣裙</option>
+          </optgroup>
+          <optgroup label="鞋履">
+            <option value="shoes_leather">皮鞋</option><option value="shoes_sneakers">板鞋</option>
+            <option value="running_shoes">运动鞋</option><option value="boots">靴子</option>
+            <option value="heels">高跟</option>
+          </optgroup>
+          <optgroup label="配饰">
+            <option value="jewelry">首饰</option><option value="hat">帽子</option>
+            <option value="scarf">围巾</option><option value="gloves">手套</option>
+          </optgroup>
+          <!-- 这几类不进搭配候选池，交给「配件收口」按主体反推：
+               皮带跟皮鞋同色、袜子跟裤子走、领带由衬衫定 -->
+          <optgroup label="配件收口（皮带·袜·包·领带）">
+            <option value="belt">皮带</option><option value="socks">袜子</option>
+            <option value="bag">包</option><option value="tie">领带</option>
+            <option value="hosiery">丝袜/连裤袜</option>
+          </optgroup>
+        </select></label>
+        <label>颜色<input id="emColor"></label>
+        <label>材质<input id="emMaterial"></label>
+        <label>状态<select id="emStatus">
+          <option value="clean">可穿</option><option value="dirty">待洗</option>
+          <option value="laundry">在洗</option><option value="dryclean">干洗</option>
+          <option value="stored">收纳</option>
+        </select></label>
+      </div>
+      <div class="tipbox" style="margin-top:12px">clo 参考：短袖 0.15 · 衬衫 0.20 · 卫衣 0.38 · 风衣 0.40 · 毛衣 0.42 · 大衣 0.65 · 羽绒服 0.92</div>
+      <button class="btn" id="emSave">保存</button>
+      <button class="btn ghost danger" id="emDelete">删除这件单品</button>
+    </div>
+  </div>
+
+  <section id="tab-trip" class="hide">
+    <div class="card">
+      <div class="ch"><h2><span class="dot"></span>出差 / 旅行打包</h2><span class="score">按目的地天气算</span></div>
+      <div class="tripform">
+        <label>目的地
+          <select id="tpCity"></select>
+        </label>
+        <label>出差目的
+          <input id="tpPurpose" value="出差" placeholder="如 客户拜访">
+        </label>
+        <label>出发日期<input type="date" id="tpStart"></label>
+        <label>返回日期<input type="date" id="tpEnd"></label>
+      </div>
+      <div class="quick" id="tpQuick"></div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--ink2)">
+        <input type="checkbox" id="tpLaundry" checked style="width:16px;height:16px;margin:0">
+        途中有条件洗衣服（件数能少带一半）
+      </label>
+      <button class="btn" id="tpGo">生成打包清单</button>
+      <div class="uperr" id="tpErr"></div>
+    </div>
+    <div id="tpResult"></div>
+  </section>
+
+  <section id="tab-luck" class="hide">
+    <div id="luckBody"><div class="empty">正在排盘…</div></div>
+  </section>
+
+  <section id="tab-schedule" class="hide">
+    <div class="card">
+      <div class="ch"><h2><span class="dot"></span>今日日程</h2></div>
+      <div id="slist"></div>
+      <div id="schForm" style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
+        <div style="font-size:12px;color:var(--ink3);margin-bottom:8px">新增日程</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input id="schStart" type="time" value="09:00" style="flex:1;min-width:0">
+          <input id="schEnd" type="time" value="10:00" style="flex:1;min-width:0">
+        </div>
+        <input id="schTitle" placeholder="日程名称，如 客户方案沟通" style="width:100%;margin-bottom:8px">
+        <input id="schNote" placeholder="备注（可选），如 外部客户，需要正式" style="width:100%;margin-bottom:8px">
+        <button class="btn" id="addSchBtn">添加到今日日程</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><h2><span class="dot"></span>设置</h2></div>
+      <div style="font-size:13px;color:var(--ink2)">
+        <div style="margin-bottom:6px">城市</div>
+        <!-- 从下拉框改成可搜索输入：全国 300 多个地级市装不进下拉，
+             而且选城市时人是「打字」而不是「翻列表」 -->
+        <div class="citypick">
+          <input id="cityInput" type="text" autocomplete="off" spellcheck="false"
+                 placeholder="输入城市名，如 东莞、苏州、兰州">
+          <div id="cityList" class="citylist hide"></div>
+        </div>
+        <div id="cityHint" class="cityhint"></div>
+        <button class="btn" id="saveBtn">保存并重新计算</button>
+      </div>
+    </div>
+  </section>
+  <div class="foot">dressmate · 本地引擎</div>
+</div>
+
+<script src="/cloud-config.js"></script>
+<script src="/cloud-config.local.js" onerror="this.remove()"></script>
+<script>
+const SLOTS = {base:"内层", mid:"中层", outer:"外层", bottom:"下装", shoes:"鞋履", accessory:"配饰"};
+// 配饰格子里写款式而不是「可穿」：项链和帽子都标「可穿」等于没标
+const JTYPE_CN = {necklace:"项链", pendant:"吊坠", stud:"耳钉", earring:"耳环",
+                  bracelet:"手链", bangle:"手镯", ring:"戒指", brooch:"胸针",
+                  anklet:"脚链", hair:"发饰"};
+let DATA = null, WARDROBE = null, TAB = "today";
+
+/* ---------- 本地服务连接状态 ---------- */
+function setHealth(ok){
+  const el = document.getElementById("hb");
+  if(!el) return;
+  el.className = "hb " + (ok ? "on" : "off");
+  el.querySelector("em").textContent = ok ? "服务已连接" : "服务未连接";
+  el.title = ok ? "本地服务正常" : "本地服务没有响应：请在项目目录执行 python server.py 后点此重试";
+}
+async function pingHealth(){
+  try{
+    const r = await fetch("/api/health", {cache:"no-store"});
+    setHealth(r.ok);
+    return r.ok;
+  }catch(e){ setHealth(false); return false; }
+}
+
+function netReason(e){
+  const m = String((e && e.message) || e || "");
+  if(/Failed to fetch|NetworkError|Load failed|Network request failed|network error/i.test(m))
+    return "连不上本地服务（服务可能已停止，或被浏览器预览代理拦住了 POST）";
+  if(/Unexpected token|<|not valid JSON/i.test(m))
+    return "服务返回的不是数据（多半是预览代理的报错页）";
+  return m || "未知错误";
+}
+
+/* 统一 POST：3 次重试 + 把网络错误翻译成人话 */
+async function apiPost(path, payload, tries=3){
+  let last;
+  for(let i=0;i<tries;i++){
+    try{
+      const r = await fetch(path, {method:"POST",
+        headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)});
+      const text = await r.text();
+      let data = null;
+      try{ data = JSON.parse(text); }catch(_){ }
+      if(!r.ok){
+        const why = (data && data.error) || text.slice(0,80) || "";
+        throw new Error(`服务返回 ${r.status}${why ? "：" + why : ""}`);
+      }
+      if(!data) throw new Error("服务响应不是 JSON");
+      setHealth(true);
+      return data;
+    }catch(e){
+      last = e;
+      // 4xx 是业务错误，重试没意义
+      if(/服务返回 4\d\d/.test(String(e.message))) break;
+      if(i < tries-1) await new Promise(s=>setTimeout(s, 400*(i+1)));
+    }
+  }
+  if(!/服务返回 4\d\d/.test(String(last && last.message))) setHealth(false);
+  throw new Error(netReason(last));
+}
+
+async function boot(){
+  await ensureCities();
+  // 老版本存的是拼音（beijing），换表之后不能让这些人一打开就「城市无效」
+  const raw = localStorage.getItem("dressmate_city") || "北京";
+  setCity(CITY_ALIAS[raw] || raw, true);
+  // 恢复 AI 识别设置
+  try{
+    const ai = JSON.parse(localStorage.getItem("dressmate_ai") || "{}");
+    if(ai.on === false) document.getElementById("aiToggle").checked = false;
+    if(ai.model) document.getElementById("aiModel").value = ai.model;
+  }catch(e){}
+  pingHealth();
+  setInterval(pingHealth, 20000);
+  if(location.protocol === "file:"){
+    document.getElementById("upStatus").innerHTML =
+      `<div class="uperr"><b>这个页面是用 file:// 打开的，接口全部不可用。</b><br>
+       请先在项目目录运行 <code>python server.py</code>，然后在浏览器地址栏访问
+       <code>http://127.0.0.1:8848</code>。</div>`;
+  }
+  await load();
+}
+
+async function load(){
+  const city = encodeURIComponent(CITY_KEY || "北京");
+  document.getElementById("content").innerHTML = '<div class="empty">正在计算…</div>';
+  try{
+    const [rec, w] = await Promise.all([
+      fetch(`/api/recommend?city=${city}${luckyOn()?"&lucky=1":""}`).then(r=>r.json()),
+      fetch("/api/wardrobe").then(r=>r.json())
+    ]);
+    if(rec.error){ document.getElementById("content").innerHTML = `<div class="empty">${rec.error}</div>`; return; }
+    DATA = rec; WARDROBE = w;
+    renderToday(); renderTimeline(); renderWardrobe(); renderSchedule();
+  }catch(e){
+    document.getElementById("content").innerHTML = `<div class="empty">加载失败：${e.message}</div>`;
+  }
+}
+
+function esc(s){ return String(s??"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+// ---------------------------------------------------------------- 城市选择
+// 全国 300 多个地级市装不进下拉框，而且选城市时人是「打字」不是「翻列表」。
+// 打字 → 本地过滤（一次拿全量表，不再请求服务器）→ 点选。
+let CITY_ALL = [], CITY_KEY = "";
+const CITY_ALIAS = {beijing:"北京", shanghai:"上海", guangzhou:"广州", shenzhen:"深圳",
+  hangzhou:"杭州", chengdu:"成都", wuhan:"武汉", nanjing:"南京", xian:"西安", harbin:"哈尔滨"};
+const CITY_HOT = ["北京","上海","广州","深圳","杭州","成都","武汉","南京","西安","哈尔滨"];
+
+async function ensureCities(){
+  if(CITY_ALL.length) return CITY_ALL;
+  try{
+    const d = await fetch("/api/cities").then(r=>r.json());
+    CITY_ALL = d.cities || [];
+  }catch(e){ CITY_ALL = []; }
+  return CITY_ALL;
+}
+function cityLabel(key){
+  const c = CITY_ALL.find(x=>x.key===key);
+  if(!c) return key;
+  return (c.province && c.province!==key) ? `${c.name} · ${c.province}` : c.name;
+}
+function setCity(key, silent){
+  CITY_KEY = key || "北京";
+  const inp = document.getElementById("cityInput");
+  if(inp) inp.value = cityLabel(CITY_KEY);
+  if(!silent) localStorage.setItem("dressmate_city", CITY_KEY);
+  const hint = document.getElementById("cityHint");
+  if(hint && CITY_ALL.length)
+    hint.textContent = `共 ${CITY_ALL.length} 个城市，输入关键字更快；改了城市会重算当天穿搭`;
+}
+function renderCityList(kw){
+  const box = document.getElementById("cityList");
+  if(!box) return;
+  const q = String(kw||"").trim().replace(/市$/,"");
+  let items;
+  if(!q){
+    items = CITY_HOT.map(k=>CITY_ALL.find(c=>c.key===k)).filter(Boolean);
+  }else{
+    items = CITY_ALL.filter(c=>c.key===q || c.name.startsWith(q)
+      || c.key.includes(q) || (c.province||"").includes(q));
+    // 分档再排序，不能只按名字长短：搜「东」时「山东」「广东」的省份匹配
+    // 会让中山、临沂挤到东莞、东营前面，而用户想找的是名字带「东」的
+    const rank = c => c.key===q ? 0
+      : c.key.startsWith(q) ? 1
+      : c.key.includes(q) ? 2 : 3;
+    items.sort((a,b)=> rank(a)-rank(b) || a.key.length - b.key.length);
+    items = items.slice(0,20);
+  }
+  box.innerHTML = items.length
+    ? items.map(c=>`<div class="opt" data-k="${esc(c.key)}">
+        <span>${esc(c.name)}</span><span class="pv">${esc(c.province||"")}</span></div>`).join("")
+    : `<div class="opt none">没找到「${esc(kw)}」，换个写法试试（「东莞市」或「Dongguan」）</div>`;
+  box.classList.remove("hide");
+}
+function closeCityList(){
+  const box = document.getElementById("cityList");
+  if(box) box.classList.add("hide");
+}
+// 输入框里可能是「东莞 · 广东」这种展示串，取城市名部分
+function typedCity(){
+  return document.getElementById("cityInput").value.split("·")[0].trim().replace(/市$/,"");
+}
+
+function renderToday(){
+  const d = DATA, w = d.weather, ctx = d.context, band = d.band;
+  // 带上省：「广东 东莞」比「东莞」更容易发现自己选错了城——
+  // 全国有几十个同名镇，光看市名分不清
+  const ci = d.city_info || {};
+  const place = (ci.province && ci.province !== d.city) ? `${ci.province} ${d.city}` : (d.city || "");
+  document.getElementById("dlabel").textContent = `${d.date} · ${place}`;
+  document.getElementById("title").textContent = `今日穿搭 · ${band.label}`;
+
+  const hot = w.daily.tmax >= 28, cold = w.feel_min < 8;
+  let html = "";
+  // 开启了幸运色时，在推荐顶部带一条轻提示，不抢保暖和场合的信息
+  if(d.luck && d.luck.ok){
+    const hp = d.luck.health || {}, so = d.luck.social || {}, tv = d.luck.travel || {},
+          st = d.luck.study || {};
+    let tags = "";
+    if(hp.flag) tags += `<span class="ltag warm">保暖余量 +${(hp.warmth_bonus||0).toFixed(2)}</span>`;
+    if(so.flag) tags += `<span class="ltag peach">桃花 ${esc((so.stars||[]).join("、"))}</span>`;
+    if(tv.flag) tags += `<span class="ltag travel">出行注意</span>`;
+    if(st.flag) tags += `<span class="ltag study">文昌 ${esc((st.stars||[]).join("、"))}</span>`;
+    if(st.careful) tags += `<span class="ltag">文书多核一遍</span>`;
+    html += `<div class="card" style="padding:12px 15px">
+      <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:13px">
+        <span style="font-size:11px;color:var(--ink3)">今日幸运</span>
+        <b>${esc(d.luck.star)}</b>
+        <span style="color:var(--ink2)">主色 ${esc(d.luck.lucky_desc)}</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--ink3)">${esc(d.luck.style)}</span>
+      </div>
+      ${tags?`<div class="ltags">${tags}</div>`:""}
+      ${d.warmth_relaxed?`<div class="ltags"><span class="ltag">按加严标准配不出整套，已退回常规保暖</span></div>`:""}
+    </div>`;
+  }
+  html += `<div class="card">
+    <div class="wx">
+      <div><span class="wxt">${Math.round(w.current.apparent ?? w.daily.tmax)}</span><span class="wxu">℃ 体感</span></div>
+      <div class="wxm">
+        <b>${w.daily.desc} · 气温 ${Math.round(w.daily.tmin)}~${Math.round(w.daily.tmax)}℃</b>
+        体感区间 ${Math.round(w.feel_min)}~${Math.round(w.feel_max)}℃ · 均温 ${w.feel_mean}℃
+      </div>
+    </div>
+    <div class="chips">
+      <span class="chip ${w.daily.pop_max>=40?"hot":""}">降水 ${w.daily.pop_max}%</span>
+      <span class="chip ${w.daily.wind_max>=25?"hot":""}">风 ${Math.round(w.daily.wind_max)}km/h</span>
+      <span class="chip ${w.daily.uv_max>=6?"hot":""}">紫外线 ${Math.round(w.daily.uv_max)}</span>
+      <span class="chip ${cold?"cool":hot?"hot":""}">温度档 ${band.label}</span>
+      <span class="chip">场合 ${ctx.formality_label}</span>
+    </div>
+  </div>`;
+
+  if(d.degraded && d.degraded.note){
+    html += `<div class="note">${esc(d.degraded.note)}</div>`;
+  }
+
+  // 配件缺口是衣橱的属性，不是某一套的属性：三套方案缺的是同一条皮带，
+  // 每张卡各说一遍就是同一句话讲三次。这里合并成一份，只说一次。
+  // 分「要补」和「可选」——皮鞋没袜子是穿错，没系领带只是少一层讲究。
+  const egaps = d.extras_gaps || [];
+  if(egaps.length){
+    const req = egaps.filter(n=>n.level==="required");
+    const opt = egaps.filter(n=>n.level!=="required");
+    const row = (n, cls) => `<div class="${cls}"><i>${cls==="greq"?"要补":"可选"}</i>
+        <b>${esc(n.name)}</b> · ${esc(n.color_hint||"")}</div>`;
+    html += `<div class="gapbox"><b>配件缺口 · 衣橱里还没有这几件</b>
+      ${req.map(n=>row(n,"greq")).join("")}
+      ${opt.map(n=>row(n,"gopt")).join("")}
+      <div class="gfoot">录进衣橱后，系统会直接从你已有的里挑出当天该配的那件。</div>
+    </div>`;
+  }
+
+  if(!(d.recommendations||[]).length){
+    // 衣橱不齐时不再只说「先把衣服传上来」：直接告诉他今天缺哪一层、每层该多厚，
+    // 现有的衣服为什么用不上（太厚/太薄也一并说清）
+    const gaps = d.gaps || [];
+    const rows = gaps.map(x=>`<div class="layer">
+        <div class="lslot">${esc(x.slot_name)}</div>
+        <div class="lmain">
+          <div class="lname">${esc(x.hint)}</div>
+          <div class="lmeta">${esc(x.note)}</div>
+        </div>
+      </div>`).join("");
+    html += `<div class="card">
+      <div class="ch"><h2><span class="dot"></span>${gaps.length?`今天还差 ${gaps.length} 层`:"先把衣服传上来"}</h2>
+        <span class="score">${gaps.length?"补齐就出整套":""}</span></div>
+      ${gaps.length?`<div style="font-size:12px;color:var(--ink3);line-height:1.7;margin-bottom:4px">
+        按今天 ${Math.round(w.feel_mean)}℃ 的体感算，每层该穿多厚写在下面。</div>${rows}`
+        :`<div class="fslot">配出一整套至少需要：内层、下装、鞋，天冷还要中层和外层。
+        每类传 2~3 件，备选方案才有得挑。手机拍照或从相册一次多选都行，AI 会自动认类型和保暖值。</div>`}
+      <button class="btn" onclick="goTab('wardrobe')">${gaps.length?"去补这几类":"去上传衣服"}</button>
+    </div>`;
+  }
+
+  (d.recommendations||[]).forEach(r=>{
+    const p = r.parts;
+    const verdict = r.verdict ? `<span class="chip" style="${r.verdict==="行"?"":"border-color:#EF9F27;color:#633806"}">${esc(r.verdict)}</span>` : "";
+    html += `<div class="card">
+      <div class="ch"><h2><span class="rank">${r.rank}</span>${esc(r.label)}</h2>
+      ${verdict}<span class="score">综合 <b>${r.score.toFixed(3)}</b></span></div>
+      <div class="bars">
+        ${bar("保暖",p.warmth)}${bar("正式",p.formality)}${bar("配色",p.harmony)}${p.style!=null?bar("风格",p.style):""}${bar("轮换",p.freshness)}${bar("天气",p.weather)}
+      </div>
+      ${r.partial && (r.missing||[]).length?`<div class="note">这套还不完整，缺 ${r.missing.map(esc).join("、")}。
+        先按能穿的部分来，补齐就是整套。</div>`:""}`;
+    r.outfit.forEach(o=>{
+      const it = o.item, photo = it.photo ? `<img class="lphoto" loading="lazy" src="/photos/${encodeURIComponent(it.photo.split("/").pop())}" onerror="this.outerHTML='<div class=&quot;lphoto ph&quot;>无图</div>'">` : `<div class="lphoto ph">无图</div>`;
+      // 配饰没有保暖值，写「保暖 0.00 clo」像出错；材质和颜色重复时只留一个
+      const meta = o.slot === "accessory"
+        ? Array.from(new Set([it.material, it.color].filter(Boolean))).map(esc).join(" · ")
+        : `${esc(it.material||"")} · ${esc(it.color||"")} · 保暖 ${it.clo ?? "-"} clo · 正式度 ${it.formality ?? "-"}`;
+      html += `<div class="layer">
+        <div class="lslot">${o.slot_name}</div>
+        <div class="lmain">
+          <div class="lname">${esc(it.name)}</div>
+          <div class="lmeta">${meta}</div>
+          <div class="lreason">${esc(o.reason)}</div>
+        </div>
+        ${photo}
+      </div>`;
+    });
+    // 「这身的坑」：搭配师给方案时最容易被省掉的一段，
+    // 但用户真正会踩的就是这几条——所以放在穿这套的按钮上面
+    if((r.pitfalls||[]).length){
+      html += `<div class="pitfalls"><b>这身的坑</b>${r.pitfalls.map(t=>`<div>· ${esc(t)}</div>`).join("")}</div>`;
+    }
+    html += extrasBlock(r);
+    html += `<button class="wearbtn" data-wear='${JSON.stringify(r.outfit.map(o=>o.item.id))}'>${r.partial?"先穿这几件":"今天就穿这套"}</button></div>`;
+  });
+
+  if(d.sport_outfit && d.sport_outfit.length){
+    html += `<div class="card"><div class="ch"><h2><span class="dot"></span>运动装备</h2></div>`;
+    d.sport_outfit.forEach(o=>{
+      html += `<div class="layer"><div class="lslot">${o.slot_name}</div>
+        <div class="lmain"><div class="lname">${esc(o.item.name)}</div>
+        <div class="lmeta">${esc(o.item.material||"")} · ${esc(o.item.color||"")}</div></div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  if(ctx.advice && ctx.advice.length){
+    html += `<div class="note info">${ctx.advice.map(esc).join("；")}</div>`;
+  }
+  document.getElementById("content").innerHTML = html;
+
+  // 绑定必须在 innerHTML 之后，否则选不到节点
+  document.querySelectorAll("#content [data-wear]").forEach(btn=>{
+    btn.onclick = async ()=>{
+      if(btn.classList.contains("done")) return;
+      const ids = JSON.parse(btn.dataset.wear);
+      btn.textContent = "记录中…";
+      try{
+        const res = await fetch("/api/wear", {method:"POST",
+          headers:{"Content-Type":"application/json"}, body:JSON.stringify({ids})}).then(r=>r.json());
+        btn.classList.add("done");
+        btn.textContent = `已记录 ${res.count||0} 件 · 明天会优先换别的`;
+        await load();
+      }catch(e){ btn.textContent = "记录失败，点此重试"; }
+    };
+  });
+}
+
+function renderTimeline(){
+  const tl = DATA.timeline;
+  const box = document.getElementById("tlcontent");
+  if(!tl || !tl.segments || !tl.segments.length){
+    box.innerHTML = `<div class="card"><div class="empty">暂无分时段计划</div></div>`;
+    return;
+  }
+  let html = `<div class="card">
+    <div class="ch"><h2><span class="dot"></span>全天穿衣时间线</h2>
+      <span class="score">${tl.segment_count} 个时段</span></div>
+    <div style="font-size:13px;color:var(--ink2)">按日程切段，每段用该时段的真实体感温度和场合单独计算。
+    判定不用换的时段会直接沿用上一套，不会让你莫名其妙换掉全身。</div>`;
+  (tl.day_advice||[]).forEach(a=>{ html += `<div class="note info" style="margin-top:12px">${esc(a)}</div>`; });
+  html += `</div>`;
+
+  tl.segments.forEach((s, idx)=>{
+    const rec = s.recommendation;
+    html += `<div class="card">
+      <div class="ch"><h2><span class="dot"></span>${s.label} · ${esc(s.occasion)}</h2>
+        <span class="badge ${s.change_needed?"change":"keep"}">${s.change_needed?"需换装":idx===0?"出门穿这套":"沿用上一套"}</span></div>
+      <div class="chips" style="margin:0 0 12px">
+        <span class="chip">体感 ${s.weather.feel_mean}℃</span>
+        <span class="chip">${esc(s.band)}</span>
+        <span class="chip">降水 ${s.weather.pop_max}%</span>
+        ${s.events.length?`<span class="chip">${s.events.map(esc).join(" / ")}</span>`:""}
+      </div>`;
+    if(s.change_reasons && s.change_reasons.length){
+      html += `<div class="chgline">${s.change_reasons.map(esc).join("；")}`;
+      if(s.changes && s.changes.length){
+        html += `<br><span style="color:var(--ink3)">变动：</span>` + s.changes.map(c=>
+          `${esc(c.slot_name)}${esc(c.action)}${c.item?esc(c.item):""}`).join("、");
+      }
+      html += `</div>`;
+    }
+    if(rec.partial && (rec.missing||[]).length){
+      html += `<div class="chgline">这套还不完整：缺 ${rec.missing.map(esc).join("、")}</div>`;
+    }
+    if((rec.pitfalls||[]).length){
+      html += `<div class="pitfalls"><b>这身的坑</b>${rec.pitfalls.slice(0,2).map(t=>`<div>· ${esc(t)}</div>`).join("")}</div>`;
+    }
+    {
+      // 分时段卡窄，配件只说「配错了」这一种——缺什么统一挂在顶部的缺口清单，
+      // 每个时段再各说一遍，一天下来会重复四五次
+      const bad = (rec.extra_issues||[])[0];
+      const have = (rec.extras||[])[0];
+      if(bad) html += `<div class="extras"><b>配件</b><div class="bad"><i>配错</i>${esc(bad.note)}</div></div>`;
+      else if(have) html += `<div class="extras"><b>配件</b><div class="have"><i>已配</i>${esc(have.item && have.item.name)}</div></div>`;
+    }
+    rec.outfit.forEach(o=>{
+      html += `<div class="minirow"><div class="ms">${o.slot_name}</div>
+        <div class="mn">${esc(o.item.name)}</div></div>`;
+    });
+    if(!s.sport){
+      html += `<button class="wearbtn" data-wear-tl='${JSON.stringify(rec.outfit.map(o=>o.item.id))}'>这个时段就穿这套</button>`;
+    }
+    html += `</div>`;
+  });
+  box.innerHTML = html;
+
+  document.querySelectorAll("#tlcontent [data-wear-tl]").forEach(btn=>{
+    btn.onclick = async ()=>{
+      if(btn.classList.contains("done")) return;
+      const ids = JSON.parse(btn.dataset.wearTl);
+      btn.textContent = "记录中…";
+      try{
+        const res = await fetch("/api/wear", {method:"POST",
+          headers:{"Content-Type":"application/json"}, body:JSON.stringify({ids})}).then(r=>r.json());
+        btn.classList.add("done");
+        btn.textContent = `已记录 ${res.count||0} 件`;
+        await load();
+      }catch(e){ btn.textContent = "记录失败，点此重试"; }
+    };
+  });
+}
+
+function bar(label, v){
+  return `<div class="bar"><div class="bl">${label} ${(v*100).toFixed(0)}</div>
+    <div class="bt"><div class="bf" style="width:${Math.round(v*100)}%"></div></div></div>`;
+}
+
+// 配件收口：只显示「衣橱里有、且跟这身合得上」的，以及「有但配错了」的。
+// 「还差什么」不写在这里——那是衣橱的缺口，顶部统一说一次就够，
+// 否则三套方案会把同一句「还差一条皮带」重复三遍。
+function extrasBlock(r){
+  const have = r.extras || [], bad = r.extra_issues || [];
+  if(!have.length && !bad.length) return "";
+  let h = `<div class="extras"><b>配件收口</b>`;
+  have.forEach(p=>{
+    h += `<div class="have"><i>已配</i>${esc(p.item && p.item.name)} · ${esc(p.reason||"")}</div>`;
+  });
+  bad.forEach(i=>{
+    h += `<div class="bad"><i>配错</i>${esc(i.note||"")}</div>`;
+  });
+  return h + `</div>`;
+}
+
+function renderWardrobe(){
+  const all = WARDROBE.items || [];
+  // 批量导入的「饰品」文件夹里混着臂章、标牌、瓷砖找平器这类电商杂货，
+  // 它们不参与搭配，堆在衣橱里只会让人以为配饰有五百件
+  const items = all.filter(it=>!it.non_wearable);
+  const hidden = all.length - items.length;
+  const missing = items.filter(it=>it.photo_missing);
+  document.getElementById("wcount").textContent =
+    `${items.length} 件` + (missing.length ? ` · ${missing.length} 件缺照片` : "");
+  const notice = document.getElementById("wnotice");
+  const tips = [];
+  if(missing.length){
+    tips.push(`有 ${missing.length} 件单品的照片文件不见了（衣橱记录还在）。
+      重新上传同名的图片就会自动对回，不需要重新录入属性。`);
+  }
+  if(hidden){
+    tips.push(`另有 ${hidden} 件不属于穿搭物品（臂章、标牌、包装等），已隐藏、不参与推荐。`);
+  }
+  notice.innerHTML = tips.length
+    ? `<div class="note" style="margin-top:0;margin-bottom:10px">${tips.join("<br>")}</div>`
+    : "";
+  // 衣橱上千件时不能一次全渲染：每组先给 60 件，剩下的点开再放
+  const LIMIT = window._showAllWardrobe ? 1e9 : 60;
+  const groups = {};
+  items.forEach(it=>{ (groups[it.slot] ||= []).push(it); });
+  let html = "";
+  Object.keys(SLOTS).forEach(slot=>{
+    const g = groups[slot] || [];
+    if(!g.length) return;
+    const shown = g.slice(0, LIMIT);
+    html += `<div style="margin:12px 0 6px;font-size:12px;color:var(--ink3)">${SLOTS[slot]} · ${g.length} 件</div><div class="wg">`;
+    shown.forEach(it=>{
+      const off = it.status !== "clean";
+      const ph = it.photo && !it.photo_missing
+        ? `<img class="wimg" loading="lazy" src="/photos/${encodeURIComponent(it.photo.split("/").pop())}" onerror="this.outerHTML='<div class=&quot;wimg ph&quot;>无图</div>'">`
+        : `<div class="wimg ph" ${it.photo_missing?'style="color:var(--danger)"':''}>${it.photo_missing?"照片缺失":"无图"}</div>`;
+      html += `<div class="witem ${off?"off":""}" data-id="${it.id}">
+        <button class="editbtn" data-edit="${it.id}" title="编辑属性">✎</button>
+        ${ph}<div class="wname">${esc(it.name)}</div>
+        <div class="wtag">${off?({dirty:"待洗",laundry:"在洗",dryclean:"干洗",stored:"收纳"}[it.status]||it.status):
+          (it.slot==="accessory" ? (JTYPE_CN[it.jewelry_type] || (it.category==="hat"?"帽子":"")) || "可穿" : "可穿")}${it.needs_review?" · 待校对":""}</div>
+      </div>`;
+    });
+    if(g.length > shown.length){
+      html += `<button class="btn" style="grid-column:1/-1;margin:4px auto" onclick="_showAllWardrobe=true;renderWardrobe()">
+        显示全部 ${g.length} 件（还有 ${g.length - shown.length} 件）</button>`;
+    }
+    html += `</div>`;
+  });
+  if(!items.length) html = `<div class="empty">衣橱还是空的，先上传衣服照片。</div>`;
+  document.getElementById("wgrid").innerHTML = html;
+  document.querySelectorAll(".witem").forEach(el=>{
+    el.onclick = async ()=>{
+      const id = el.dataset.id;
+      await fetch("/api/toggle", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({id})});
+      await load();
+    };
+  });
+  document.querySelectorAll("[data-edit]").forEach(btn=>{
+    btn.onclick = e=>{ e.stopPropagation(); openEdit(btn.dataset.edit); };
+  });
+}
+
+function renderSchedule(){
+  // 用原始 schedule（含 note、end），context.events 已丢失这些字段
+  const evs = DATA.schedule || [];
+  let html = "";
+  if(!evs.length) html = `<div class="empty">今天没有日程记录</div>`;
+  evs.forEach((e, i)=>{
+    const tag = (DATA.context.events||[])[i]?.tag || "";
+    html += `<div class="layer"><div class="lslot">${esc(e.start||"")}</div>
+      <div class="lmain"><div class="lname">${esc(e.title)}</div>
+      <div class="lmeta">${esc(tag)}${e.note?" · "+esc(e.note):""}</div></div>
+      <button class="del" data-del="${i}">删除</button></div>`;
+  });
+  document.getElementById("slist").innerHTML = html;
+
+  document.querySelectorAll("#slist [data-del]").forEach(btn=>{
+    btn.onclick = async ()=>{
+      const i = Number(btn.dataset.del);
+      const events = [...(DATA.schedule||[])];
+      events.splice(i, 1);
+      await saveSchedule(events);
+    };
+  });
+}
+
+/* ================= 出差打包 ================= */
+const TRIP_PURPOSES = ["客户拜访","内部会议","展会","培训","团建"];
+let TRIP_INITED = false;
+
+function ymd(d){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+
+function initTrip(){
+  if(TRIP_INITED) return;
+  TRIP_INITED = true;
+  ensureCities().then(()=>{
+    // 目的地按省分组：300 多个城市平铺在 select 里翻不动，
+    // 分组之后至少能「先找省再找市」
+    const groups = {};
+    CITY_ALL.forEach(c=>{
+      const p = c.province || "其他";
+      if(!groups[p]) groups[p] = [];
+      groups[p].push(c);
+    });
+    const order = Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
+    document.getElementById("tpCity").innerHTML =
+      // 常用城市置顶，不在分组里再翻
+      `<optgroup label="常用">` +
+      CITY_HOT.map(k=>CITY_ALL.find(c=>c.key===k)).filter(Boolean)
+        .map(c=>`<option value="${esc(c.key)}">${esc(c.name)}</option>`).join("") +
+      `</optgroup>` +
+      order.map(p=>`<optgroup label="${esc(p)}">` +
+        groups[p].sort((a,b)=>a.key.localeCompare(b.key,"zh"))
+          .map(c=>`<option value="${esc(c.key)}">${esc(c.name)}</option>`).join("") +
+        `</optgroup>`).join("");
+    // 默认落在当前城市，出差多半从那儿出发
+    const sel = document.getElementById("tpCity");
+    if([...sel.options].some(o=>o.value===CITY_KEY)) sel.value = CITY_KEY;
+  });
+  document.getElementById("tpStart").value = ymd(new Date());
+  document.getElementById("tpEnd").value = ymd(new Date(Date.now()+3*864e5));
+  document.getElementById("tpQuick").innerHTML =
+    TRIP_PURPOSES.map(p=>`<span data-p="${p}">${p}</span>`).join("");
+  document.querySelectorAll("#tpQuick span").forEach(el=>{
+    el.onclick = ()=>{
+      document.querySelectorAll("#tpQuick span").forEach(x=>x.classList.remove("on"));
+      el.classList.add("on");
+      document.getElementById("tpPurpose").value = el.dataset.p;
+    };
+  });
+  document.getElementById("tpGo").onclick = runTrip;
+}
+
+async function runTrip(){
+  const btn = document.getElementById("tpGo");
+  const err = document.getElementById("tpErr");
+  const box = document.getElementById("tpResult");
+  err.textContent = "";
+  const start = document.getElementById("tpStart").value;
+  const end = document.getElementById("tpEnd").value;
+  if(!start || !end){ err.textContent = "请选择出发和返回日期"; return; }
+  if(end < start){ err.textContent = "返回日期不能早于出发日期"; return; }
+  const q = new URLSearchParams({
+    city: document.getElementById("tpCity").value,
+    start: start, end: end,
+    purpose: document.getElementById("tpPurpose").value || "出差",
+    laundry: document.getElementById("tpLaundry").checked ? "1" : "0"
+  });
+  if(luckyOn()) q.set("lucky", "1");
+  btn.disabled = true; btn.textContent = "正在拉天气预报…";
+  box.innerHTML = '<div class="card"><div class="empty">正在按目的地天气逐日推算…</div></div>';
+  try{
+    const r = await fetch("/api/trip?"+q.toString()).then(x=>x.json());
+    if(r.error){
+      let msg = `<div class="card"><div class="empty">${esc(r.error)}</div>`;
+      if((r.alerts||[]).length){
+        msg += r.alerts.map(a=>`<div class="note">${esc(a)}</div>`).join("");
+      }
+      msg += `<button class="btn ghost" onclick="goTab('wardrobe')">去衣橱补衣服</button></div>`;
+      box.innerHTML = msg;
+      return;
+    }
+    renderTrip(r);
+  }catch(e){
+    box.innerHTML = `<div class="card"><div class="empty">请求失败：${esc(e.message)}</div></div>`;
+  }finally{
+    btn.disabled = false; btn.textContent = "生成打包清单";
+  }
+}
+
+function renderTrip(r){
+  const box = document.getElementById("tpResult");
+  let h = `<div class="card">
+    <div class="ch"><h2><span class="dot"></span>${esc(r.city)} · ${r.days} 天</h2>
+      <span class="score">共 <b>${r.total_items}</b> 件</span></div>
+    <div class="chips">
+      <span class="chip">${esc(r.formality_label)}</span>
+      <span class="chip cool">体感跨度 ${r.temp_span}℃</span>
+      <span class="chip">${r.laundry ? "途中可洗衣" : "不洗衣"}</span>
+    </div>`;
+  if((r.alerts||[]).length){
+    h += r.alerts.map(a=>`<div class="note">${esc(a)}</div>`).join("");
+  }
+  if((r.luck_notes||[]).length){
+    h += r.luck_notes.map(a=>`<div class="note info">${esc(a)}</div>`).join("");
+  }
+  h += `</div>`;
+
+  h += `<div class="card"><div class="ch"><h2><span class="dot"></span>装箱清单</h2>
+    <span class="score">${r.total_items} 件</span></div>`;
+  for(const p of r.packing){
+    h += `<div class="packrow">
+      <div class="pk">${esc(p.slot_name)}<b>${p.count} ${esc(p.unit)}</b></div>
+      <div class="pv">`;
+    for(const it of p.items){
+      h += `<div class="pitem">${esc(it.name)}`
+        + (it.used_days > 0 ? `<span class="ud">穿 ${it.used_days} 天</span>` : "")
+        + (it.spare ? `<span class="sp">换洗备用</span>` : "")
+        + `</div>`;
+    }
+    if(p.shortfall > 0){
+      h += `<div class="pshort">还差 ${p.shortfall} ${esc(p.unit)}才够换洗</div>`;
+    }
+    h += `</div></div>`;
+  }
+  h += `</div>`;
+
+  h += `<div class="card"><div class="ch"><h2><span class="dot"></span>逐日穿法</h2>
+    <span class="score">${r.daily_plans.length} 天</span></div>`;
+  for(const d of r.daily_plans){
+    const names = (d.recommendation.outfit||[]).map(o=>esc(o.item.name)).join(" · ");
+    h += `<div class="dayrow">
+      <div class="ddate">${esc(d.short)}<br>${esc(d.weekday)}</div>
+      <div class="dbody">
+        <div>${esc(d.weather.desc)} ${Math.round(d.feel_min)}~${Math.round(d.feel_max)}℃
+          <span class="dband">${esc(d.band)}</span></div>
+        <div style="color:var(--ink2);margin-top:3px">${names}</div>
+      </div></div>`;
+  }
+  h += `</div>`;
+
+  if((r.advice||[]).length){
+    h += `<div class="card"><div class="ch"><h2><span class="dot"></span>怎么装怎么说</h2></div>
+      <ul class="ulist">${r.advice.map(a=>`<li>${esc(a)}</li>`).join("")}</ul></div>`;
+  }
+  box.innerHTML = h;
+}
+
+/* ================= 今日幸运穿搭 ================= */
+const COLOR_HEX = {
+  "黑":"#2C2C2A","藏青":"#1F3A5F","深蓝":"#1B3A57","墨绿":"#2F4F3A","橄榄绿":"#6B7A4A",
+  "青":"#4A8A8A","酒红":"#6E2233","正红":"#C0392B","藕粉":"#E8B4B8","紫":"#6B4C8A",
+  "驼色":"#B99570","卡其":"#C3B091","燕麦":"#E3D7C3","姜黄":"#C9A227",
+  "米白":"#F2EDE4","纯白":"#FFFFFF","浅灰":"#C9C9C4","银":"#C0C0C0"
+};
+let LUCK_INITED = false;
+
+// 命理参考默认开启：这四项（幸运色/保暖余量/场景标签/文书提醒）都是用户主动要的功能，
+// 默认关掉等于做完看不见。不想看时在「幸运」Tab 一键关掉。
+function luckyOn(){ return localStorage.getItem("dm_lucky") !== "0"; }
+
+async function loadLuck(force){
+  if(LUCK_INITED && !force) return;
+  LUCK_INITED = true;
+  const box = document.getElementById("luckBody");
+  box.innerHTML = '<div class="card"><div class="empty">正在排盘…</div></div>';
+  try{
+    const p = await fetch("/api/profile").then(r=>r.json());
+    if(!p.profile || !p.profile.solar_date){ renderLuckSetup(p); return; }
+    const l = await fetch("/api/luck").then(r=>r.json());
+    if(!l.ok){
+      box.innerHTML = `<div class="card"><div class="empty">${esc(l.error||"排盘失败")}</div></div>`;
+      return;
+    }
+    renderLuck(l);
+  }catch(e){
+    box.innerHTML = `<div class="card"><div class="empty">连不上本地服务：${esc(e.message)}</div></div>`;
+  }
+}
+
+function renderLuckSetup(p){
+  const box = document.getElementById("luckBody");
+  const times = (p.times||[]).map(t=>
+    `<option value="${t.value}"${t.value===6?" selected":""}>${esc(t.label)}</option>`).join("");
+  box.innerHTML = `<div class="card">
+    <div class="ch"><h2><span class="dot"></span>先填出生信息</h2><span class="score">只存本机</span></div>
+    <div class="note info">用于排紫微斗数命盘，写在 data/profile.json，不上传任何服务器。
+      不填也能用其他功能。</div>
+    <div class="tripform" style="margin-top:12px">
+      <label class="full">出生日期（阳历）<input type="date" id="lpDate"></label>
+      <label class="full">出生时辰<select id="lpTime">${times}</select></label>
+      <label class="full">性别<select id="lpGender"><option>男</option><option>女</option></select></label>
+    </div>
+    <button class="btn" id="lpSave">排盘</button>
+    <div class="uperr" id="lpErr"></div>
+  </div>`;
+  document.getElementById("lpSave").onclick = saveProfile;
+}
+
+async function saveProfile(){
+  const err = document.getElementById("lpErr");
+  const btn = document.getElementById("lpSave");
+  err.textContent = "";
+  const body = {
+    solar_date: document.getElementById("lpDate").value,
+    time_index: +document.getElementById("lpTime").value,
+    gender: document.getElementById("lpGender").value
+  };
+  if(!body.solar_date){ err.textContent = "请先选出生日期"; return; }
+  btn.disabled = true; btn.textContent = "排盘中…";
+  try{
+    const r = await fetch("/api/profile", {method:"POST",
+      headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)}).then(x=>x.json());
+    if(!r.ok){ err.textContent = r.error || "保存失败"; return; }
+    if(r.luck && r.luck.ok) renderLuck(r.luck);
+    else loadLuck(true);
+  }catch(e){
+    err.textContent = "保存失败：" + e.message;
+  }finally{
+    btn.disabled = false; btn.textContent = "排盘";
+  }
+}
+
+function renderLuck(l){
+  const box = document.getElementById("luckBody");
+  const sw = names => (names||[]).map(n=>
+    `<span class="sw"><i style="background:${COLOR_HEX[n]||"#CFCFC9"}"></i>${esc(n)}</span>`).join("");
+  let h = `<div class="card">
+    <div class="ch"><h2><span class="dot"></span>今日幸运穿搭</h2>
+      <span class="score">${esc(l.lunar_date||"")}</span></div>
+    <div class="luckhead">
+      <div class="luckstar">${esc(l.star||"—")}</div>
+      <div class="luckmeta">
+        流日 ${esc(l.day_ganzhi)} · ${esc(l.day_element)}行${l.brightness?" · "+esc(l.brightness)+"位":""}<br>
+        款式偏${esc(l.style)}<br>${esc(l.style_tip)}
+      </div>
+    </div>
+    <div class="lbl">主色</div><div class="swatches">${sw(l.lucky_colors)}</div>`;
+  if((l.accent_colors||[]).length){
+    h += `<div class="lbl">点缀色${l.accent_star?"（"+esc(l.accent_star)+"化禄）":""}</div>
+      <div class="swatches">${sw(l.accent_colors)}</div>`;
+  }
+  if((l.avoid_colors||[]).length){
+    h += `<div class="lbl">避开${l.avoid_star?"（"+esc(l.avoid_star)+"化忌）":""}</div>
+      <div class="swatches">${sw(l.avoid_colors)}</div>`;
+  }
+  if((l.tips||[]).length){
+    h += `<ul class="ulist">${l.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`;
+  }
+  const hp = l.health||{}, tv = l.travel||{}, so = l.social||{}, st = l.study||{};
+  const items = [hp.flag, !!tv.note, so.flag, st.flag || st.careful].filter(Boolean).length;
+  if(items){
+    h += `<div class="lbl">和穿衣服有关的 ${items} 件事</div><ul class="ulist">`;
+    if(hp.flag) h += `<li><b>保暖</b>：${esc(hp.note)}
+      <span style="color:var(--ink3)">目标保暖值已上调 ${(hp.warmth_bonus||0).toFixed(2)} clo，
+      冷天才生效，热天不动。</span></li>`;
+    if(tv.note) h += `<li><b>出行</b>：${esc(tv.note)}</li>`;
+    if(so.flag) h += `<li><b>场合</b>：${esc(so.note)}</li>`;
+    if(st.flag || st.careful) h += `<li><b>文书</b>：${esc(st.note)}
+      <span style="color:var(--ink3)">${st.flag
+        ? "今天推荐会偏向配色干净、少撞色的组合，幅度很小，改不了保暖和场合。"
+        : ""}</span></li>`;
+    h += `</ul>`;
+  }
+  if((st.checklist||[]).length){
+    h += `<div class="lbl">出门前顺手三件事</div>
+      <ul class="ulist">${st.checklist.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`;
+  }
+  h += `<div class="lrow">
+      <label class="switch"><input type="checkbox" id="lkOn"${luckyOn()?" checked":""}><span></span></label>
+      <div class="ltext">让命理参考影响推荐
+        <br><span style="color:var(--ink3)">幸运色、保暖余量、场景标签、文书提醒。
+        只做小幅加权与文案，保暖底线和场合永远优先</span></div>
+    </div>
+    <div class="disc">${esc(l.disclaimer||"")}</div>
+    <button class="btn ghost" id="lkEdit" style="margin-top:12px">修改出生信息</button>
+  </div>`;
+  box.innerHTML = h;
+  document.getElementById("lkOn").onchange = e=>{
+    localStorage.setItem("dm_lucky", e.target.checked ? "1" : "0");
+    load();
+  };
+  document.getElementById("lkEdit").onclick = ()=>{
+    fetch("/api/profile").then(r=>r.json()).then(renderLuckSetup)
+      .catch(e=>{ box.innerHTML = `<div class="card"><div class="empty">${esc(e.message)}</div></div>`; });
+  };
+}
+
+function goTab(name){
+  const el = document.querySelector(`.tab[data-tab="${name}"]`);
+  if(!el) return;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  el.classList.add("on");
+  TAB = name;
+  ["today","timeline","wardrobe","trip","luck","schedule"].forEach(k=>{
+    document.getElementById("tab-"+k).classList.toggle("hide", k!==TAB);
+  });
+  if(name === "trip") initTrip();
+  if(name === "luck") loadLuck();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick = ()=>goTab(t.dataset.tab);
+});
+
+document.getElementById("saveBtn").onclick = async ()=>{
+  // 只打了字没点选也要能用：先在本地表里找，找不到就交给后端在线查
+  const typed = typedCity();
+  if(typed && typed !== CITY_KEY){
+    const hit = CITY_ALL.find(c=>c.key===typed || c.name===typed);
+    CITY_KEY = hit ? hit.key : typed;
+    setCity(CITY_KEY, true);
+  }
+  closeCityList();
+  localStorage.setItem("dressmate_city", CITY_KEY);
+  await load();
+};
+
+const cityInputEl = document.getElementById("cityInput");
+cityInputEl.addEventListener("focus", ()=>{ ensureCities().then(()=>renderCityList("")); });
+cityInputEl.addEventListener("input", ()=>{ ensureCities().then(()=>renderCityList(cityInputEl.value)); });
+cityInputEl.addEventListener("keydown", e=>{
+  if(e.key === "Enter"){
+    e.preventDefault();
+    const first = document.querySelector("#cityList .opt[data-k]");
+    if(first){ setCity(first.dataset.k, true); closeCityList(); }
+  }
+  if(e.key === "Escape") closeCityList();
+});
+document.getElementById("cityList").addEventListener("click", e=>{
+  const opt = e.target.closest(".opt[data-k]");
+  if(!opt) return;
+  setCity(opt.dataset.k, true);
+  closeCityList();
+});
+// 点页面别处收起候选，避免列表盖住下面的按钮
+document.addEventListener("click", e=>{
+  if(!e.target.closest(".citypick")) closeCityList();
+});
+async function saveSchedule(events){
+  await fetch("/api/schedule", {method:"POST",
+    headers:{"Content-Type":"application/json"}, body:JSON.stringify(events)});
+  await load();
+}
+
+document.getElementById("addSchBtn").onclick = async ()=>{
+  const title = document.getElementById("schTitle").value.trim();
+  if(!title){ alert("请填写日程名称"); return; }
+  const ev = {
+    start: document.getElementById("schStart").value || "09:00",
+    end: document.getElementById("schEnd").value || "10:00",
+    title,
+    note: document.getElementById("schNote").value.trim(),
+  };
+  const events = [...(DATA.schedule||[]), ev].sort((a,b)=>(a.start||"").localeCompare(b.start||""));
+  document.getElementById("schTitle").value = "";
+  document.getElementById("schNote").value = "";
+  await saveSchedule(events);
+};
+
+/* ============ 照片上传 / 校对 / 入库 ============ */
+let PENDING = [], EDIT_ID = null;
+const SLOT_OPTS = ["base","mid","outer","bottom","shoes","accessory"];
+
+/* ---------- AI 看图识别（服务端代理云服务大模型，免密钥） ---------- */
+const AI_CONCURRENCY = 2;
+let AI_QUEUE = [], AI_ACTIVE = 0;
+
+function aiEnabled(){ return document.getElementById("aiToggle").checked; }
+function aiModel(){ return document.getElementById("aiModel").value || "hy4free"; }
+
+function parseLooseJSON(text){
+  if(!text) return null;
+  let t = String(text).trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  const a = t.indexOf("{"), b = t.lastIndexOf("}");
+  if(a < 0 || b <= a) return null;
+  const body = t.slice(a, b+1);
+  try{ return JSON.parse(body); }
+  catch(e){
+    try{ return JSON.parse(body.replace(/,\s*([}\]])/g, "$1")); }  // 容错尾逗号
+    catch(e2){ return null; }
+  }
+}
+
+async function aiRecognize(dataUrl){
+  // 走本地服务端代理：浏览器直连云服务会被 Origin 白名单拒绝
+  const r = await fetch("/api/ai-recognize", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ data: dataUrl, model: aiModel() }),
+  });
+  let d = null;
+  try{ d = await r.json(); }catch(e){ throw new Error(`识别服务返回异常（${r.status}）`); }
+  if(!d || !d.ok) throw new Error((d && d.error) || `识别服务不可用（${r.status}）`);
+  const ai = parseLooseJSON(d.raw);
+  if(!ai) throw new Error("识别结果无法解析");
+  return ai;
+}
+
+function mergeAI(item, ai){
+  const clampNum = (v, lo, hi)=>{ const n = parseFloat(v); return isNaN(n) ? null : Math.max(lo, Math.min(hi, n)); };
+  if(ai.slot && SLOTS[ai.slot]) item.slot = ai.slot;
+  if(ai.category) item.category = String(ai.category).slice(0, 30);
+  if(ai.name) item.name = String(ai.name).trim().slice(0, 20);
+  if(ai.color){
+    // 归一化：去掉「色」后缀，引擎的配色规则用固定色表
+    item.color = String(ai.color).trim().replace(/\s/g, "").replace(/(色系|色)$/, "").slice(0, 8);
+  }
+  if(ai.material && ai.material !== "看不出") item.material = String(ai.material).slice(0, 12);
+  const clo = clampNum(ai.clo, 0, 2);
+  if(clo !== null) item.clo = Math.round(clo*100)/100;
+  const f = clampNum(ai.formality, 0, 4);
+  if(f !== null) item.formality = Math.round(f);
+  for(const k of ["waterproof","windproof","sun_protective","sport"]){
+    if(typeof ai[k] === "boolean") item[k] = ai[k];
+  }
+  const seasons = ["spring","summer","autumn","winter"];
+  if(Array.isArray(ai.season)){
+    const s = ai.season.filter(x=>seasons.includes(x));
+    if(s.length) item.season = s;
+  }
+  return item;
+}
+
+function enqueueAI(p){
+  if(!aiEnabled() || !p) return;
+  if(p.ai === "running" || p.ai === "ok") return;
+  if(AI_QUEUE.includes(p)) return;
+  AI_QUEUE.push(p);
+  pumpAI();
+}
+
+async function pumpAI(){
+  while(AI_ACTIVE < AI_CONCURRENCY && AI_QUEUE.length){
+    const p = AI_QUEUE.shift();
+    if(!PENDING.includes(p)) continue;
+    AI_ACTIVE++;
+    p.ai = "running";
+    renderPending();
+    try{
+      const dataUrl = p.dataUrl || await fetchAsDataUrl(p.url);
+      const ai = await aiRecognize(dataUrl);
+      mergeAI(p.item, ai);
+      p.ai = "ok";
+      p.aiConf = ai.confidence || "";
+      p.aiNotes = ai.notes || "";
+      p.warnings = [];
+      // 连体装（连衣裙/连体裤）在分层模型里没有独立槽位，提醒用户手动拆
+      if(/dress|jumpsuit|one_?piece|overall/i.test(String(ai.category || ""))){
+        p.warnings = ["识别为连体款式，建议改成「内层 + 下装」两件入库，或手动指定槽位"];
+      }
+      p.confidence = ai.confidence === "低" ? "低" : "高";
+    }catch(e){
+      p.ai = "err";
+      p.aiNotes = (e && (e.error && e.error.message || e.message)) || "识别失败";
+    }finally{
+      AI_ACTIVE--;
+      renderPending();
+    }
+  }
+}
+
+async function fetchAsDataUrl(url){
+  const blob = await fetch(url).then(r=>r.blob());
+  return await new Promise((res, rej)=>{
+    const fr = new FileReader();
+    fr.onload = ()=>res(fr.result);
+    fr.onerror = rej;
+    fr.readAsDataURL(blob);
+  });
+}
+
+
+function compress(file){
+  return new Promise((resolve)=>{
+    const fr = new FileReader();
+    fr.onerror = ()=>resolve(null);
+    fr.onload = ()=>{
+      const img = new Image();
+      img.onerror = ()=>resolve(fr.result);   // 压缩不了就用原图
+      img.onload = ()=>{
+        const max = 1280, r = Math.min(1, max/Math.max(img.width, img.height));
+        const cv = document.createElement("canvas");
+        cv.width = Math.round(img.width*r); cv.height = Math.round(img.height*r);
+        const cx = cv.getContext("2d");
+        cx.fillStyle = "#FFFFFF"; cx.fillRect(0,0,cv.width,cv.height);
+        cx.drawImage(img,0,0,cv.width,cv.height);
+        resolve(cv.toDataURL("image/jpeg", 0.82));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+let RETRY_FILES = null;
+function retryUpload(){
+  if(RETRY_FILES && RETRY_FILES.length) uploadFiles(RETRY_FILES);
+  else alert("请重新选择照片");
+}
+
+async function uploadFiles(fileList){
+  const isImg = f => (f.type && f.type.startsWith("image/"))
+    || /\.(jpe?g|png|webp|bmp|gif|heic|heif)$/i.test(f.name || "");
+  const files = [...fileList].filter(isImg);
+  if(!files.length){ alert("没有可上传的图片（支持 jpg/png/webp/heic）"); return; }
+  RETRY_FILES = files;
+  const st = document.getElementById("upStatus");
+  st.innerHTML = `<div class="upok">正在压缩并上传 0 / ${files.length} …</div>`;
+  let done = 0, all = [], errs = [];
+  for(let i=0;i<files.length;i+=5){
+    const batch = [];
+    for(const f of files.slice(i,i+5)){
+      const url = await compress(f);
+      if(url){
+        // 统一转成 .jpg，保留中文名主干（AI 关闭时靠它推断）
+        const stem = f.name.replace(/\.[^.]+$/,"");
+        batch.push({name: stem + ".jpg", data: url});
+      }
+    }
+    if(!batch.length){ errs.push(`第 ${i+1} 批：这张图读不出来（可能已损坏或格式不支持）`); continue; }
+    try{
+      const res = await apiPost("/api/upload", {files:batch});
+      // srcIndex 把原图 dataURL 对回落盘后的文件名
+      (res.saved||[]).forEach(s=>{ s.dataUrl = (batch[s.srcIndex]||{}).data; });
+      all.push(...(res.saved||[])); errs.push(...(res.errors||[]));
+    }catch(e){ errs.push(`第 ${i+1} 批上传失败：${e.message}`); }
+    done = Math.min(i+5, files.length);
+    st.innerHTML = `<div class="upok">正在压缩并上传 ${done} / ${files.length} …</div>`;
+  }
+  const errHtml = errs.length
+    ? `<div class="uperr">${errs.map(esc).join("；")}　<span class="relink" onclick="retryUpload()">点此重试上传</span></div>`
+    : "";
+  if(!all.length){
+    // 一张都没存下来：把原因摆出来，不要假装成功
+    st.innerHTML = `<div class="uperr"><b>上传失败，一张都没存下。</b></div>` + errHtml +
+      `<div class="uperr">如果上面写的是「连不上本地服务」，说明后台服务停了：在项目目录执行 <code>python server.py</code>，然后点上面的「点此重试上传」。</div>`;
+    return;
+  }
+  const known = new Set(PENDING.map(p=>p.filename));
+  const fresh = all.filter(p=>!known.has(p.filename));
+  fresh.forEach(p=>{
+    if(p.restored) p.restoreId = p.restored.id;   // 同名照片 → 恢复到原条目
+    PENDING.push(p);
+  });
+  renderPending();
+  const restoredCount = fresh.filter(p=>p.restoreId).length;
+  const restoredNote = restoredCount
+    ? `<div class="upok">其中 ${restoredCount} 张是已有单品的照片，已原样恢复（可顺手用 AI 校正属性）。</div>`
+    : "";
+  if(aiEnabled() && fresh.length){
+    st.innerHTML = `<div class="upok">已上传 ${all.length} 张，AI 正在识别衣服类型与保暖值…</div>`
+      + restoredNote + errHtml;
+    fresh.forEach(p=>enqueueAI(p));
+  }else{
+    st.innerHTML = `<div class="upok">已上传 ${all.length} 张，请在下方校对后加入衣橱。</div>`
+      + restoredNote + errHtml;
+  }
+  document.getElementById("fileInput").value = "";
+}
+
+function renderPending(){
+  const card = document.getElementById("pendingCard");
+  const box = document.getElementById("pendList");
+  if(!PENDING.length){ card.classList.add("hide"); return; }
+  card.classList.remove("hide");
+  const aiOn = PENDING.filter(p=>p.ai === "ok").length;
+  document.getElementById("pendCount").textContent = aiOn
+    ? `${PENDING.length} 件待校对 · ${aiOn} 件已 AI 识别`
+    : `${PENDING.length} 件待校对`;
+  let html = "";
+  PENDING.forEach((p,i)=>{
+    const it = p.item, cls = p.confidence==="低"?"low":p.confidence==="中"?"mid":"high";
+    let badge;
+    if(p.ai === "running") badge = `<span class="aibadge">AI 识别中…</span>`;
+    else if(p.ai === "ok") badge = `<span class="aibadge">AI 识别 · ${esc(p.aiConf||"")}</span>`;
+    else if(p.ai === "err") badge = `<span class="aibadge err">AI 未识别 · 按文件名</span>`;
+    else badge = `<span class="aibadge name">按文件名</span>`;
+    const tip = (p.ai === "ok" && p.aiNotes) ? p.aiNotes : (p.ai === "err" ? p.aiNotes : "");
+    html += `<div class="pend">
+      <img src="${p.url}" onerror="this.style.opacity=.25">
+      <div class="pbody">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          ${badge}
+          <span class="conf ${cls}">置信 ${p.confidence}</span>
+          <span style="font-size:11px;color:var(--ink3)">${esc(it.category||"")}</span>
+          ${p.ai === "running" ? "" : `<button class="reai" data-reai="${i}">重新识别</button>`}
+          <button class="pdel" data-pdel="${i}">移除</button>
+        </div>
+        ${tip ? `<div style="font-size:11px;color:var(--ink3);margin-top:3px">${esc(tip)}</div>` : ""}
+        ${(p.warnings||[]).map(w=>`<div style="font-size:11px;color:var(--danger);margin-top:3px">! ${esc(w)}</div>`).join("")}
+        <input class="pin" data-pf="name" data-pi="${i}" value="${esc(it.name)}" placeholder="名称" style="margin-top:6px">
+        <div class="prow">
+          <select class="psel" data-pf="slot" data-pi="${i}">
+            ${SLOT_OPTS.map(s=>`<option value="${s}" ${it.slot===s?"selected":""}>${SLOTS[s]}</option>`).join("")}
+          </select>
+          <label style="font-size:11px;color:var(--ink3)">clo <input class="pnum" type="number" step="0.01" min="0" max="2"
+            data-pf="clo" data-pi="${i}" value="${it.clo}"></label>
+          <label style="font-size:11px;color:var(--ink3)">正式 <input class="pnum" type="number" step="1" min="0" max="4"
+            data-pf="formality" data-pi="${i}" value="${it.formality}"></label>
+          <input class="pnum" data-pf="color" data-pi="${i}" value="${esc(it.color)}" placeholder="颜色">
+        </div>
+      </div>
+    </div>`;
+  });
+  box.innerHTML = (function(){
+    const allErr = PENDING.some(p=>p.ai==="err") && !PENDING.some(p=>p.ai==="running"||p.ai==="ok");
+    if(!allErr) return "";
+    const why = (PENDING.find(p=>p.ai==="err")||{}).aiNotes || "";
+    return `<div class="uperr" style="margin-bottom:8px;line-height:1.55">
+      <b>照片已经上传成功了，只是 AI 识别服务连不上。</b><br>
+      不影响使用：先在下面选「内层 / 下装 / 外层」，再填一下 clo 保暖值，就能加入衣橱。
+      ${why ? `<br><span style="font-size:11px;color:var(--ink3)">技术原因：${esc(why)}</span>` : ""}
+    </div>`;
+  })() + html;
+  box.querySelectorAll("[data-pf]").forEach(el=>{
+    el.onchange = ()=>{
+      const i = Number(el.dataset.pi), k = el.dataset.pf;
+      let v = el.value;
+      if(k==="clo") v = parseFloat(v)||0.2;
+      if(k==="formality") v = Math.max(0,Math.min(4,parseInt(v)||0));
+      PENDING[i].item[k] = v;
+      // 人工改过就取消待校对标记
+      PENDING[i].item.needs_review = false;
+    };
+  });
+  box.querySelectorAll("[data-pdel]").forEach(btn=>{
+    btn.onclick = ()=>{ PENDING.splice(Number(btn.dataset.pdel),1); renderPending(); };
+  });
+  box.querySelectorAll("[data-reai]").forEach(btn=>{
+    btn.onclick = ()=>{
+      const p = PENDING[Number(btn.dataset.reai)];
+      if(!p) return;
+      p.ai = null;
+      enqueueAI(p);
+    };
+  });
+}
+
+document.getElementById("importBtn").onclick = async ()=>{
+  if(!PENDING.length) return;
+  const btn = document.getElementById("importBtn");
+  btn.disabled = true; btn.textContent = "正在写入…";
+  try{
+    const news = PENDING.filter(p=>!p.restoreId);
+    const restores = PENDING.filter(p=>p.restoreId);
+    let added = 0, skipped = 0, updated = 0;
+    if(news.length){
+      const res = await fetch("/api/import", {method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({items:news.map(p=>p.item)})}).then(r=>r.json());
+      added = res.added || 0; skipped = res.skipped || 0;
+    }
+    // 恢复类：把 AI 校正后的属性回写到已有条目
+    for(const p of restores){
+      await fetch("/api/item", {method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({...p.item, id: p.restoreId})});
+      updated++;
+    }
+    PENDING = []; renderPending();
+    const parts = [];
+    if(added) parts.push(`新增 ${added} 件`);
+    if(updated) parts.push(`更新 ${updated} 件`);
+    if(skipped) parts.push(`跳过 ${skipped} 件重复`);
+    document.getElementById("upStatus").innerHTML =
+      `<div class="upok">${parts.join(" · ") || "没有变化"}，推荐已按新衣橱重算。</div>`;
+    await load();
+  }catch(e){ alert("写入失败："+e.message); }
+  btn.disabled = false; btn.textContent = "全部加入衣橱";
+};
+
+document.getElementById("scanBtn").onclick = async ()=>{
+  const st = document.getElementById("upStatus");
+  try{
+    const res = await fetch("/api/photos/unimported").then(r=>r.json());
+    if(res.error){ st.innerHTML = `<div class="uperr">${esc(res.error)}</div>`; return; }
+    const known = new Set(PENDING.map(p=>p.filename));
+    const fresh = (res.pending||[]).filter(p=>!known.has(p.filename));
+    PENDING.push(...fresh);
+    renderPending();
+    fresh.forEach(p=>enqueueAI(p));
+    st.innerHTML = `<div class="upok">扫描到 ${res.count} 张未入库照片${fresh.length?`，新增 ${fresh.length} 张待校对`:"（都已在待校对列表里）"}。</div>`;
+  }catch(e){ st.innerHTML = `<div class="uperr">扫描失败：${esc(e.message)}</div>`; }
+};
+
+function saveAISettings(){
+  localStorage.setItem("dressmate_ai", JSON.stringify({
+    on: document.getElementById("aiToggle").checked,
+    model: document.getElementById("aiModel").value,
+  }));
+}
+document.getElementById("aiToggle").onchange = saveAISettings;
+document.getElementById("aiModel").onchange = saveAISettings;
+
+const drop = document.getElementById("dropZone"), fileInput = document.getElementById("fileInput");
+drop.onclick = ()=>fileInput.click();
+fileInput.onchange = e=>{ if(e.target.files.length) uploadFiles(e.target.files); };
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{
+  e.preventDefault(); drop.classList.add("over");
+}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{
+  e.preventDefault(); drop.classList.remove("over");
+}));
+drop.addEventListener("drop", e=>{
+  if(e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
+});
+
+/* ============ 单品编辑 / 删除 ============ */
+function openEdit(id){
+  const it = (WARDROBE.items||[]).find(x=>x.id===id);
+  if(!it) return;
+  EDIT_ID = id;
+  document.getElementById("emTitle").textContent = "编辑 · " + it.name;
+  const img = document.getElementById("emPhoto");
+  if(it.photo){ img.src = "/photos/"+it.photo.split("/").pop(); img.style.display="block"; }
+  else img.style.display="none";
+  document.getElementById("emName").value = it.name || "";
+  document.getElementById("emSlot").value = it.slot || "base";
+  document.getElementById("emCat").value = it.category || "tshirt";
+  document.getElementById("emFormal").value = it.formality ?? 2;
+  document.getElementById("emClo").value = it.clo ?? 0.2;
+  document.getElementById("emColor").value = it.color || "";
+  document.getElementById("emMaterial").value = it.material || "";
+  document.getElementById("emStatus").value = it.status || "clean";
+  document.getElementById("editModal").classList.remove("hide");
+}
+
+// 快速补录「配件收口」那几件：衣橱里一条皮带都没有时，
+// 「皮带与皮鞋同色」这条规矩就没有可以挂靠的实物，只能停在建议。
+// 点一下预设好品类和 clo，填个颜色就能存——clo 约等于 0，别让它影响保暖计算。
+const EXTRA_PRESET = {
+  belt:    ["黑皮带", "黑", 3, 0.02, "皮革"],
+  socks:   ["深灰袜", "深灰", 3, 0.03, "棉"],
+  bag:     ["黑公文包", "黑", 3, 0.02, "皮革"],
+  tie:     ["藏青领带", "藏青", 4, 0.02, "真丝"],
+  hosiery: ["肤色连裤袜", "米", 3, 0.02, "丝袜"],
+};
+function openNewExtra(role){
+  const p = EXTRA_PRESET[role] || ["新配件", "", 2, 0.02, ""];
+  EDIT_ID = "x" + Date.now().toString(36);
+  document.getElementById("emTitle").textContent = "补录配件 · " + p[0];
+  document.getElementById("emPhoto").style.display = "none";
+  document.getElementById("emName").value = p[0];
+  document.getElementById("emSlot").value = "accessory";
+  document.getElementById("emCat").value = role;
+  document.getElementById("emFormal").value = p[2];
+  document.getElementById("emClo").value = p[3];
+  document.getElementById("emColor").value = p[1];
+  document.getElementById("emMaterial").value = p[4];
+  document.getElementById("emStatus").value = "clean";
+  document.getElementById("editModal").classList.remove("hide");
+}
+function closeEdit(){ document.getElementById("editModal").classList.add("hide"); EDIT_ID = null; }
+document.getElementById("emClose").onclick = closeEdit;
+document.getElementById("editModal").onclick = e=>{ if(e.target.id==="editModal") closeEdit(); };
+document.getElementById("emSave").onclick = async ()=>{
+  if(!EDIT_ID) return;
+  // 配件收口这几类的品类决定角色，槽位固定为配饰：
+  // 它们由 engine/extras.py 按主体反推，不参与保暖与正式度的主评分
+  const cat = document.getElementById("emCat").value;
+  const EXTRA_ROLE = {belt:"belt", socks:"sock", bag:"bag", tie:"tie", hosiery:"hosiery"};
+  const extra = EXTRA_ROLE[cat];
+  await fetch("/api/item", {method:"POST", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      id: EDIT_ID,
+      name: document.getElementById("emName").value.trim() || "未命名",
+      slot: extra ? "accessory" : document.getElementById("emSlot").value,
+      category: cat,
+      layer_role: extra || null,
+      formality: parseInt(document.getElementById("emFormal").value)||0,
+      clo: parseFloat(document.getElementById("emClo").value)||0.2,
+      color: document.getElementById("emColor").value.trim(),
+      material: document.getElementById("emMaterial").value.trim(),
+      status: document.getElementById("emStatus").value,
+      needs_review: false,
+    })});
+  closeEdit(); await load();
+};
+document.getElementById("emDelete").onclick = async ()=>{
+  if(!EDIT_ID || !confirm("确定从衣橱删除这件单品？照片文件会保留在 photos/ 里。")) return;
+  await fetch("/api/item-delete", {method:"POST", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({id:EDIT_ID})});
+  closeEdit(); await load();
+};
+document.getElementById("extraQuick").onclick = e=>{
+  const role = e.target.dataset && e.target.dataset.extra;
+  if(role) openNewExtra(role);
+};
+document.getElementById("clearDemoBtn").onclick = async ()=>{
+  if(!confirm("将删除所有「照片文件不存在」的示例单品，用于清空演示数据换成你的真实衣橱。\n照片已上传的单品不会受影响。确定继续？")) return;
+  const res = await fetch("/api/clear-demo", {method:"POST",
+    headers:{"Content-Type":"application/json"}, body:JSON.stringify({confirm:true})}).then(r=>r.json());
+  document.getElementById("upStatus").innerHTML = `<div class="upok">已清理 ${res.removed} 件示例数据。</div>`;
+  await load();
+};
+
+boot();
+</script>
+</body>
+</html>

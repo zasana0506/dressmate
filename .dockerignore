@@ -1,0 +1,49 @@
+# 镜像里不要的东西。原则：只带代码、只读资产和样例数据。
+# 真实衣橱、照片、日志一律不进镜像。
+
+# 版本控制
+.git/
+.gitignore
+.github/
+
+# 私人数据
+wardrobe/
+data/profile.json
+data/schedule.json
+data/wear_log.json
+data/weather_cache.json
+data/server.log*
+data/server.out
+reports/
+web/cloud-config.local.js
+
+# 开发与测试
+tests/
+tools/feedback.py
+tools/label_photos.py
+tools/import_yfutupian.py
+tools/migrate_meta.py
+tools/fix_colors.py
+tools/fix_jewelry.py
+tools/build_cities.py
+tools/check_wardrobe.py
+tools/daily_push.py
+
+# 文档与本地文件
+README.md
+docs/
+*.md
+!README.md
+*.bat
+一键启动.bat
+start.py
+run.py
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.vscode/
+.idea/
+.gitignore
+.dockerignore
+docker-compose.yml

@@ -1,0 +1,44 @@
+# ---- 私人的东西，一律不进仓库 ----
+#
+# 衣橱照片和标注数据是使用者自己的资产，也是这个项目最不该外流的部分。
+# 仓库只带一份完全虚构的样例衣橱（samples/wardrobe.json）。
+
+# 真实衣橱与照片
+wardrobe/wardrobe.json
+wardrobe/photos/
+wardrobe/*.csv
+
+# 运行时状态（data/cities.json 是例外——它是只读资产，必须进仓库）
+data/profile.json
+data/schedule.json
+data/wear_log.json
+data/weather_cache.json
+data/server.log
+data/server.log.*
+data/server.out
+reports/
+
+# Docker 卷里生成的副本
+data/photos/
+data/wardrobe.json
+
+# ---- 通用 ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# 本地私有云服务配置（含发布密钥）
+web/cloud-config.local.js
+
+# 一次性导入脚本：针对特定数据集，不通用
+tools/import_yfutupian.py
