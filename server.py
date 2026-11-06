@@ -448,21 +448,48 @@ def cloud_vision(data_url, model="hy4free"):
         },
     )
     out = []
-    with urllib.request.urlopen(req, timeout=120) as resp:
-        for raw in resp:
-            line = raw.decode("utf-8", "ignore").strip()
-            if not line.startswith("data:"):
-                continue
-            chunk = line[5:].strip()
-            if chunk == "[DONE]":
-                break
-            try:
-                j = json.loads(chunk)
-                c = j["choices"][0]["delta"].get("content")
-                if c:
-                    out.append(c)
-            except Exception:
-                continue
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            for raw in resp:
+                line = raw.decode("utf-8", "ignore").strip()
+                if not line.startswith("data:"):
+                    continue
+                chunk = line[5:].strip()
+                if chunk == "[DONE]":
+                    break
+                try:
+                    j = json.loads(chunk)
+                    c = j["choices"][0]["delta"].get("content")
+                    if c:
+                        out.append(c)
+                except Exception:
+                    continue
+    except urllib.error.HTTPError as exc:
+        # 原样抛出的话，用户看到的是「HTTP Error 400: Bad Request」这种天书，
+        # 完全不知道是自己图片的问题还是云端模型的问题。
+        detail = ""
+        try:
+            detail = exc.read().decode("utf-8", "ignore")[:300]
+        except Exception:
+            pass
+        hint = {
+            400: "云端拒绝了这次请求（图片可能无法识别，或模型名不对）",
+            401: "云服务密钥无效或已过期",
+            403: "没有访问这个云服务的权限",
+            404: "云服务地址或模型名不对",
+            413: "图片太大，云端拒收",
+            429: "调用太频繁，被限流了，等一会儿再试",
+            500: "云端服务内部错误",
+            502: "云端服务暂时不可用",
+            503: "云端服务暂时不可用",
+        }.get(exc.code, "")
+        raise RuntimeError(
+            f"云端返回 {exc.code}：{hint or '请求失败'}"
+            + (f"（{detail}）" if detail else "")) from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"连不上云服务：{exc.reason}") from exc
+    if not out:
+        raise RuntimeError("云端返回了空结果（可能是模型没看懂这张图）")
     return "".join(out)
 
 
@@ -825,13 +852,16 @@ class Handler(BaseHTTPRequestHandler):
             data_url = body.get("data") or ""
             if not str(data_url).startswith("data:image/"):
                 return self._json({"ok": False, "error": "缺少图片数据"}, 400)
+            model = body.get("model") or "hy4free"
             try:
-                raw = vision(data_url, body.get("model"))
-                _log(f"AI识别成功 长度{len(raw)}")
+                raw = vision(data_url, model)
+                _log(f"AI识别成功 模型{model} 长度{len(raw)}")
                 return self._json({"ok": True, "raw": raw})
             except Exception as exc:
-                _log(f"AI识别失败: {exc}")
-                return self._json({"ok": False, "error": f"{exc}"}, 502)
+                # 把模型名和异常类型一起记下来：排查时最缺的就是这两样
+                _log(f"AI识别失败 模型{model} {type(exc).__name__}: {exc}")
+                return self._json({"ok": False,
+                                   "error": f"{type(exc).__name__}: {exc}"}, 502)
 
         if p.path == "/api/upload":
             """接收浏览器压缩后的 dataURL，落盘到 wardrobe/photos/ 并推断属性。"""

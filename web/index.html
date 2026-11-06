@@ -1509,7 +1509,11 @@ async function pumpAI(){
       p.confidence = ai.confidence === "低" ? "低" : "高";
     }catch(e){
       p.ai = "err";
-      p.aiNotes = (e && (e.error && e.error.message || e.message)) || "识别失败";
+      // 错误信息必须显示出来：原来兜底成「识别失败」四个字，
+      // 用户既不知道是模型挂了、还是图片格式不对、还是网络断了。
+      const msg = (e && (e.error && e.error.message || e.message)) || "";
+      p.aiNotes = msg || `识别失败（模型 ${aiModel()}）`;
+      p.aiErr = true;
     }finally{
       AI_ACTIVE--;
       renderPending();
@@ -1522,7 +1526,9 @@ async function fetchAsDataUrl(url){
   return await new Promise((res, rej)=>{
     const fr = new FileReader();
     fr.onload = ()=>res(fr.result);
-    fr.onerror = rej;
+    // 必须用 Error reject：直接 rej(事件对象) 会让上层拿不到 .message，
+    // 错误信息全丢，最后只能显示成「识别失败」四个字，用户无从排查。
+    fr.onerror = ()=>rej(new Error("读取图片失败（文件可能已损坏）"));
     fr.readAsDataURL(blob);
   });
 }
@@ -1688,7 +1694,16 @@ function renderPending(){
     btn.onclick = ()=>{
       const p = PENDING[Number(btn.dataset.reai)];
       if(!p) return;
+      // AI 开关关着的时候 enqueueAI 会直接返回，点了像坏了一样。
+      // 这里明确告诉用户要先把开关打开。
+      if(!aiEnabled()){
+        const sw = document.getElementById("aiToggle");
+        sw.checked = true;
+        saveAISettings();
+        alert("已帮你打开「AI 看图识别」，正在重新识别…");
+      }
       p.ai = null;
+      p.aiNotes = "";
       enqueueAI(p);
     };
   });
